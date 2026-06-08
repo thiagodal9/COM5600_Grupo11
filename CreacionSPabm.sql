@@ -32,13 +32,23 @@ as
 begin
 	--Si no existe el idActvidad, no se debe realizar la insercion
 	if not exists (select idActividad from PnTablas.Actividad where idActividad = @idActividad)
-	begin
-		print 'El idActividad es invalido'
-	end
-	else
-	begin
+		throw 50001, 'El idActividad es inválido.', 1;
+
+	begin transaction
+	begin try
 		insert into PnTablas.HorarioActividad(fechaActividad, idActividad, horaInicio) values (@fechaActividad, @idActividad, @horaInicio)
-	end
+		commit transaction;
+		print 'El horario de la actividad se ha registradoa exitosamente.';
+	end try
+	begin catch
+		if @@TRANCOUNT > 0
+			rollback transaction;
+
+		declare @msj nvarchar(100) = ERROR_MESSAGE();
+		declare @numError int = ERROR_NUMBER();
+		print concat('ERROR (', @numError,'):', @msj);
+		throw
+	end catch
 end
 go
 
@@ -48,16 +58,22 @@ create procedure PnSPabm.bajaHorarioActividad
 @idActividad int
 as
 begin
-	if exists (select fechaActividad, idActividad from PnTablas.HorarioActividad 
+	if not exists (select fechaActividad, idActividad from PnTablas.HorarioActividad 
 	where fechaActividad = @fechaActividad and idActividad = @idActividad)
-	begin
+		throw 50001, 'La actividad no se realiza en el dia indicado',1;
+	
+	begin transaction;
+	begin try
 		delete PnTablas.HorarioActividad 
-		where fechaActividad = @fechaActividad and idActividad = @idActividad
-	end
-	else
-	begin
-		print 'No existe la actividad en el dia que se quiere borrar'
-	end
+		where fechaActividad = @fechaActividad and idActividad = @idActividad;
+		commit transaction;
+		print 'El horario de la actividad se ha eliminado exitosamente.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError, ')', @msj);
+	end catch
 end
 go
 
@@ -72,17 +88,22 @@ as
 begin
 	if not exists (select fechaActividad, idActividad from PnTablas.HorarioActividad 
 	where fechaActividad = @fechaActividadActual and idActividad = @idActividadActual)
-	begin
-		print 'No existe la actividad en el dia que se quiere borrar'
-	end
-	else
-	begin
+		throw 50001, 'La actividad no se realiza en el dia indicado',1;
+	begin transaction
+	begin try
 		update PnTablas.HorarioActividad 
 		set fechaActividad = @fechaActividadNueva,
 		    idActividad = @idActividadNueva,
 			horaInicio = @horaInicioNueva
 		where fechaActividad = @fechaActividadActual and idActividad = @idActividadActual
-	end
+		commit transaction
+		print 'La modificación se ha realizado con éxito.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')', @msj);
+	end catch
 end
 go
 
@@ -103,22 +124,23 @@ create procedure PnSPabm.altaVenta
 as
 begin
 	if not exists (select idActividad from PnTablas.Actividad where idActividad = @idActividad and idParque = @idParque)
-	begin
-		print 'Esa actividad no se realiza en ese parque'
-	end
+		throw 50001, 'Esa actividad no se realiza en ese parque',1;
 	else if not exists (select idActividad from PnTablas.HorarioActividad where idActividad = @idActividad and fechaActividad = @fechaActividad)
-	begin
-		print 'Esa actividad no se realiza en esa fecha'
-	end
+		throw 50002, 'Esa actividad no se realiza en esa fecha',1;
 	else if (select costo from PnTablas.TipoActividad where idTipoActividad = @idTipoActividad) != @totalVenta
-	begin
-		print 'Ese tipo de actividad no tiene ese valor de venta'
-	end
-	else
-	begin
+		throw 50003, 'Ese tipo de actividad no tiene ese valor de venta',1;
+	begin transaction
+	begin try
 		insert into PnTablas.Venta(idActividad, idTipoActividad, fechaActividad, idParque, fechaVenta, totalVenta) values
 		(@idActividad, @idTipoActividad, @fechaActividad, @idParque, @fechaVenta, @totalVenta)
-	end
+		commit transaction;
+		print 'La Venta se ha registrado exitosamente.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
@@ -128,14 +150,19 @@ create procedure PnSPabm.bajaVenta
 as
 begin
 	if not exists (select idVenta from PnTablas.Venta where idVenta = @idVenta)
-	begin
-		print 'La venta que quiere eliminar no existe'	
-	end
-	else
-	begin
+		throw 50001, 'El idVenta es inválido.',1; 	
+	begin transaction
+	begin try
 		delete from PnTablas.Venta 
-		where idVenta = @idVenta
-	end
+		where idVenta = @idVenta;
+		commit transaction
+		print 'El registro de la venta se ha eliminado exitósamente.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
@@ -152,11 +179,10 @@ create procedure PnSPabm.modificacionVenta
 as
 begin
 	if not exists (select idVenta from PnTablas.Venta where idVenta = @idVenta)
-	begin
-		print 'La Venta que se quiere modificar no existe'
-	end
-	else
-	begin
+		throw 50001, 'El idVenta es inválido.',1; 
+
+	begin transaction
+	begin try
 		update PnTablas.Venta
 		set idActividad = @idActividadNuevo,
 			idTipoActividad = @idTipoActividadNuevo,
@@ -164,8 +190,15 @@ begin
 			idParque = @idParqueNuevo,
 			fechaVenta = @fechaVentaNuevo,
 			totalVenta = @totalVentaNuevo
-		where idVenta = @idVenta
-	end
+		where idVenta = @idVenta;
+		commit transaction
+		print 'La modificación se realizó con éxito.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
@@ -184,15 +217,20 @@ create procedure PnSPabm.altaEntrada
 as 
 begin
 	if not exists  (select idVenta from PnTablas.Venta where idVenta = @idVenta)
-	begin
-		print 'La venta de la entrada no esta registrada'
-	end
-	else
-	begin
+		throw 50001, 'El idVenta es inválido.',1;
+
+	begin transaction
+	begin try
 		insert into PnTablas.Entrada(idVenta, precio, descripcion, cantidad) values
-		(@idVenta, @precio, @descripcion, @cantidad)
-		print 'Entrada registrada con exito'
-	end
+		(@idVenta, @precio, @descripcion, @cantidad);
+		commit transaction;
+		print 'Entrada registrada con exito';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
@@ -202,15 +240,20 @@ create procedure PnSPabm.bajaEntrada
 as
 begin
 	if not exists (select idEntrada from PnTablas.Entrada where idEntrada = @idEntrada)
-	begin
-		print 'No hay una entrada registrada con es id'
-	end
-	else
-	begin
+		throw 50001, 'El idEntrada es inválido.',1;
+
+	begin transaction
+	begin try
 		delete from PnTablas.Entrada
-		where idEntrada = @idEntrada
-		print 'Entrada eliminada exitosamente'
-	end
+		where idEntrada = @idEntrada;
+		commit transaction;
+		print 'Entrada eliminada exitosamente.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
@@ -224,21 +267,27 @@ create procedure PnSPabm.modificacionEntrada
 as
 begin
 	if not exists (select idEntrada from PnTablas.Entrada where idEntrada = @idEntrada)
-	begin
-		print 'No existe una entrada con ese id'
-	end
+		throw 5001, 'El idEntrada es inválido.',1;
+	
 	else if not exists (select idVenta from PnTablas.Venta where idVenta = @idVentaNueva)
-	begin
-		print 'No hay una venta registrada con ese id'
-	end
-	else
-	begin
+		throw 50002, 'El idVenta es inválido.', 1;
+	
+	begin transaction
+	begin try
 		update PnTablas.Entrada
 		set idVenta = @idVentaNueva,
 			precio = @precioNueva,
 			descripcion = @descripcionNueva,
 			cantidad = @cantidadNueva
-	end
+		where idEntrada = @idEntrada;
+		commit transaction;
+		print 'La modificación de la entrada se realizó exitosamente.';
+	end try
+	begin catch
+		declare @msj nvarchar(100) = error_message();
+		declare @numError int = error_number();
+		print concat('ERROR (', @numError,')',@msj);
+	end catch
 end
 go
 
