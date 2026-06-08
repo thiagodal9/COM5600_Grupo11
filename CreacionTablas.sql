@@ -218,13 +218,15 @@ if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'HorarioActividad')
 begin
 create table PnTablas.HorarioActividad(
-fechaActividad date primary key,
-idActividad int,
-horaInicion time,
+fechaActividad date not null,
+idActividad int not null,
+horaInicio time,
+constraint PK_HorarioActividad primary key(fechaActividad, idActividad),
 constraint FK_HorarioActividad_Actividad foreign key(idActividad) references PnTablas.Actividad(idActividad),
 )
 end
 go
+
 
 --Tabla Venta
 if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
