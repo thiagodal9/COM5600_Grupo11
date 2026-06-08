@@ -1,0 +1,6 @@
+En la tabla GuardaParque se eliminó el campo idGuardaParque, la primary key pasa a ser directamente (idPersona, idParque, fechaInicio)
+Se añadió a la primary key fechaInicio, para que una persona pueda ser guardaParque en un mismo parque en diferentes momentos
+Fecha del cambio 07/06/2026
+
+En la tabla Guia se eliminó el campo idGuia, la primary key paso a ser directamente (idPersona)
+Fecha del cambio 07/06/2026

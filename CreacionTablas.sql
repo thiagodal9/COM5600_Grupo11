@@ -96,6 +96,11 @@ end
 go
 
 --Tabla GuardaParque
+/*
+Se eliminó el campo idGuardaParque, la primary key pasa a ser directamente (idPersona, idParque, fechaInicio)
+Se añadió a la primary key fechaInicio, para que una persona pueda ser guardaParque en un mismo parque en diferentes momentos
+Fecha del cambio 07/06/2026
+*/
 if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'GuardaParque')
 begin
@@ -132,6 +137,10 @@ end
 go
 
 --Tabla Guia
+/*
+Se eliminó el campo idGuia, la primary key paso a ser directamente (idPersona)
+Fecha del cambio 07/06/2026
+*/
 if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Guia')
 begin
