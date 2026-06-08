@@ -17,8 +17,8 @@ use ParquesNacionales
 go
 
 --Creo el esquema donde voy a crear las tablas
-create schema PnTablas
-go
+--create schema PnTablas
+--go
 
 --Creación de tablas
 
@@ -68,12 +68,10 @@ TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Parque')
 begin
 create table PnTablas.Parque(
 idParque int identity(1,1) primary key,
-idTipoParque int,
-idProv int,
+idTipoParque int references PnTablas.TipoParque (idTipoParque),
+idProv int references PnTablas.Provincia (idProvincia),
 nombre char (50),
 superficieM2 decimal(10,2),
-constraint FK_Parque_TipoParque(idTipoParque) references PnTablas.TipoParque(idTipoParque),
-constraint FK_Parque_Provincia(idProvincia) references PnTablas.Provincia(idProvincia)
 )
 end
 go
@@ -85,13 +83,12 @@ TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'HorarioParque')
 begin
 create table PnTablas.HorarioParque(
 idHorario int identity(1,1) primary key,
-idParque int,
+idParque int references PnTablas.Parque(idParque),
 horaApertura time,
 horaCierre time,
 temporada char(10),
 ubicacion char(30),
 dia date,
-constraint FK_HorarioParque_Parque(idParque) references PnTablas.Parque(idParque),
 )
 end
 go
@@ -101,14 +98,17 @@ if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'GuardaParque')
 begin
 create table PnTablas.GuardaParque(
-idGuardaParque int identity(1,1)
 idPersona int,
 idParque int,
-estado bool,
+estado char(8),
 fechaInicio date,
-constraint PK_GuardaParque(idGuardaParque, idPersona, idParque),
-constraint FK_GuardaParque_Persona (idPersona) references PnTablas.Persona(idPersona),
-constraint FK_GuardaParque_Parque (idParque) references PnTablas.Parque(idParque),
+constraint CK_estado check(
+	estado like 'Activo' or
+	estado like 'Inactvo'
+),
+constraint PK_GuardaParque primary key(idPersona, idParque, fechaInicio),
+constraint FK_GuardaParque_Persona foreign key(idPersona) references PnTablas.Persona(idPersona),
+constraint FK_GuardaParque_Parque foreign key(idParque) references PnTablas.Parque(idParque),
 )
 end
 go
@@ -118,12 +118,13 @@ if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Historial')
 begin
 create table PnTablas.Historial(
-fechaIngreso date,
-idGuardaParque int,
+idPersona int,
+idParque int,
+fechaInicio date,
 razonEgreso varchar,
 fechaEgreso date,
-constraint PK_Historial(fechaIngreso, idGuardaParque),
-constraint FK_Historial_GuardaParque (idGuardaParque) references PnTablas.GuardaParque(idGuardaParque)
+constraint PK_Historial primary key(fechaInicio, idPersona),
+constraint FK_Historial_GuardaParque foreign key(idPersona, idParque, fechaInicio) references PnTablas.GuardaParque(idPersona, idParque, fechaInicio)
 )
 end
 go
@@ -133,13 +134,12 @@ if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Guia')
 begin
 create table PnTablas.Guia(
-idGuia int identity(1,1),
 idPersona int,
 titulo varchar,
-vencimiento Habilitacion date,
+vencimientoHabilitacion date,
 numeroHabilitacion int,
-constraint PK_Guia(idGuia, idPersona),
-constraint FK_Guia_Persona (idPersona) references PnTablas.Persona(idPersona)
+constraint PK_Guia primary key(idPersona),
+constraint FK_Guia_Persona foreign key(idPersona) references PnTablas.Persona(idPersona)
 )
 end
 go
@@ -160,13 +160,11 @@ if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
 TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'GuiaEspecialidad')
 begin
 create table PnTablas.GuiaEspecialidad(
-idGuia int,
 idPersona int,
 idEspecialidad int,
-constraint PK_GuiaEspecialidad(idGuia, idPersona, idEspecialidad),
-constraint FK_GuiaEspecialidad_Guia (idGuia) references PnTablas.Guia(idGuia),
-constraint FK_GuiaEspecialidad_Persona (idPersona) references PnTablas.Persona(idPersona),
-constraint FK_GuiaEspecialidad_Especialidad(idEspecialidad) references PnTablas.Especialidad(idEspecialidad)
+constraint PK_GuiaEspecialidad primary key(idPersona, idEspecialidad),
+constraint FK_GuiaEspecialidad_Persona foreign key(idPersona) references PnTablas.Persona(idPersona),
+constraint FK_GuiaEspecialidad_Especialidad foreign key(idEspecialidad) references PnTablas.Especialidad(idEspecialidad)
 )
 end
 go
@@ -191,14 +189,14 @@ begin
 create table PnTablas.Actividad(
 idActividad int identity(1,1) primary key,
 idParque int,
-idGuia int,
+idPersona int,
 idTipoActividad int,
 nombre char(50),
 duracionMinutos int,
 cupoMax int,
-constraint FK_Actividad_Parque (idParque) references PnTablas.Parque(idParque),
-constraint FK_Actividad_Guia (idGuia) references PnTablas.Guia(idGuia),
-constraint FK_Actividad_TipoActividad (idTipoActividad) references PnTablas.TipoActividad(idTipoActividad)
+constraint FK_Actividad_Parque foreign key(idParque) references PnTablas.Parque(idParque),
+constraint FK_Actividad_Guia foreign key (idPersona) references PnTablas.Guia(idPersona),
+constraint FK_Actividad_TipoActividad foreign key(idTipoActividad) references PnTablas.TipoActividad(idTipoActividad)
 )
 end
 go
@@ -212,7 +210,7 @@ create table PnTablas.HorarioActividad(
 fechaActividad date primary key,
 idActividad int,
 horaInicion time,
-constraint FK_HorarioActividad_Actividad (idActividad) references PnTablas.Actividad(idActividad),
+constraint FK_HorarioActividad_Actividad foreign key(idActividad) references PnTablas.Actividad(idActividad),
 )
 end
 go
@@ -229,10 +227,10 @@ fechaActividad date,
 idParque int,
 fechaVenta date,
 totalVenta decimal(10,2),
-constraint FK_Venta_Actividad (idActividad) references PnTablas.Actividad(idActividad),
-constraint FK_Venta_TipoActividad (idTipoActividad) references PnTablas.TipoActividad(idTipoActividad),
-constraint FK_Venta_FechaActividad (fechaActividad) references PnTablas.HorarioActividad(fechaActividad),
-constraint FK_Venta_Parque (idParque) references PnTablas.Parque(idParque)
+constraint FK_Venta_Actividad foreign key(idActividad) references PnTablas.Actividad(idActividad),
+constraint FK_Venta_TipoActividad foreign key(idTipoActividad) references PnTablas.TipoActividad(idTipoActividad),
+constraint FK_Venta_FechaActividad foreign key(fechaActividad) references PnTablas.HorarioActividad(fechaActividad),
+constraint FK_Venta_Parque foreign key(idParque) references PnTablas.Parque(idParque)
 )
 end
 go
@@ -248,7 +246,7 @@ importe decimal(10,2),
 fechaPago date,
 descripcion varchar,
 metodo char(30),
-constraint FK_PagoVenta_Venta (idVenta) references PnTablas.Venta(idVenta)
+constraint FK_PagoVenta_Venta foreign key(idVenta) references PnTablas.Venta(idVenta)
 )
 end
 go
@@ -264,7 +262,7 @@ idVenta int,
 precio decimal(10,2),
 descripcion varchar,
 cantidad int,
-constraint FK_Entrada_Venta (idVenta) references PnTablas.Venta(idVenta)
+constraint FK_Entrada_Venta foreign key(idVenta) references PnTablas.Venta(idVenta)
 )
 end
 
@@ -293,8 +291,8 @@ rubro char(30),
 fechaInicioConcesion date,
 fechaFinConcesion date,
 costoAlquiler decimal(10,2),
-constraint FK_Concesion_Parque (idParque) references PnTablas.Parque(idParque),
-constraint FK_Concesion_Empresa (idEmpresa) references PnTablas.Empresa(idEmpresa)
+constraint FK_Concesion_Parque foreign key(idParque) references PnTablas.Parque(idParque),
+constraint FK_Concesion_Empresa foreign key(idEmpresa) references PnTablas.Empresa(idEmpresa)
 )
 end
 
@@ -307,8 +305,12 @@ idPagoConcesion int identity(1,1) primary key,
 idConcesion int,
 fechaPagoConcesion date,
 importe decimal(10,2),
-estado bool,
-constraint FK_PagoConcesion_Concesion (idConsecion) references PnTablas.Consecion(idConsecion)
+estado char(7),
+constraint CK_estadoPago check(
+	estado like 'Pago' or
+	estado like 'No pago'
+),
+constraint FK_PagoConcesion_Concesion foreign key(idConcesion) references PnTablas.Concesion(idConcesion)
 )
 end
 
