@@ -4,3 +4,8 @@ Fecha del cambio 07/06/2026
 
 En la tabla Guia se eliminó el campo idGuia, la primary key paso a ser directamente (idPersona)
 Fecha del cambio 07/06/2026
+
+GuardaParque.estado paso de char(8) a char(10), tipo 'Inactvo' a 'Inactivo'
+Historial: PK ampliada a idPersona, idParque, fechaInicio, para que matchee la FK a GuardaParque
+8 campos varchar sin longitud a varchar(n) con sus tamaños correspondientes
+Fecha del cambio 11/06/2026
