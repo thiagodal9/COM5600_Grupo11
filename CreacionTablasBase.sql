@@ -31,7 +31,7 @@ IF NOT EXISTS (SELECT name FROM sys.schemas WHERE name = 'PnTablas')
 EXECUTE('CREATE SCHEMA PnTablas');
 GO
 
-----Creación de tablas
+----CreaciÃ³n de tablas
 
 --Tabla TipoParque
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TipoParque')
@@ -342,10 +342,10 @@ BEGIN
 END;
 GO
 
---Tabla Posee
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Posee')
+--Tabla PoseeEntrada
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'PoseeEntrada')
 BEGIN
-	CREATE TABLE PnTablas.Posee
+	CREATE TABLE PnTablas.PoseeEntrada
 	(
 		Pago INT,
 		Entrada INT,
@@ -357,10 +357,10 @@ BEGIN
 END;
 GO
 
---Tabla Tiene
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Tiene')
+--Tabla TieneHActividad
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHActividad')
 BEGIN
-	CREATE TABLE PnTablas.Tiene
+	CREATE TABLE PnTablas.TieneHActividad
 	(
 		Pago INT,
 		Actividad INT,
