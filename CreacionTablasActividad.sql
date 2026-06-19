@@ -11,8 +11,7 @@ LEOPALDI PINAZZI AGUSTIN EMANUEL
 */
 
 /*
-----Tablas Principales: TipoParque, Provincia, Parque, HorarioParque, Dia
-----Tablas Intermedias: Abre
+----Tablas Principales: Actividad, TipoActividad
 */
 
 IF EXISTS (SELECT name FROM sys.databases WHERE name = 'ParquesNacionales')
