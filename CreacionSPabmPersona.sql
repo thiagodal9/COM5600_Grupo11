@@ -17,7 +17,7 @@ BEGIN
 END;
 GO
 
-PRINT '--Creando SPabm para tablas Parque...--';
+PRINT '--Creando SPabm para tablas Persona...--';
 GO
 
 -------------------------------------------------------------------------------------
