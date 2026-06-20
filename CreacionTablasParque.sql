@@ -31,7 +31,7 @@ BEGIN
 	CREATE TABLE PnTablas.TipoParque
 	(
 		IDTipoParque INT IDENTITY(1, 1) PRIMARY KEY,
-		DescripcionParque char(30)
+		DescripcionParque varchar(30) NOT NULL UNIQUE
 	)
 	PRINT '--Creada Tabla: TipoParque--'
 END;
@@ -43,7 +43,7 @@ BEGIN
 	CREATE TABLE PnTablas.Provincia
 	(
 		IDProv INT IDENTITY(1, 1) PRIMARY KEY,
-		NombreProv char(15)
+		NombreProv varchar(15) NOT NULL UNIQUE
 	)
 	PRINT '--Creada Tabla: Provincia--'
 END
@@ -56,10 +56,10 @@ BEGIN
 	CREATE TABLE PnTablas.Parque
 	(
 		IDParque INT IDENTITY(1, 1) PRIMARY KEY,
-		NombreParque varchar(30),
-		Ubicacion INT,
-		Superficie INT,
-		Tipo INT,
+		NombreParque varchar(100) NOT NULL UNIQUE,
+		Ubicacion INT NOT NULL,
+		Superficie INT NOT NULL,
+		Tipo INT NOT NULL,
 		FOREIGN KEY(Ubicacion) REFERENCES PnTablas.Provincia(IDProv),
 		FOREIGN KEY(Tipo) REFERENCES PnTablas.TipoParque(IDTipoParque)
 	)
@@ -106,7 +106,8 @@ BEGIN
 		Horario INT,
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY(Dia) REFERENCES PnTablas.Dia(IDDia),
-		FOREIGN KEY(Horario) REFERENCES PnTablas.HorarioParque(IDHorarioP)
+		FOREIGN KEY(Horario) REFERENCES PnTablas.HorarioParque(IDHorarioP),
+		PRIMARY KEY(Parque, Dia, Horario)
 	)
 	PRINT '--Creada Tabla: Abre--'
 END;

@@ -30,7 +30,7 @@ GO
 
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTipoParque'))
     DROP PROCEDURE PnSPabm.altaTipoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaTipoParque (@tipo varchar(30))
 AS
 BEGIN
@@ -39,13 +39,13 @@ BEGIN
 	ELSE
 		PRINT 'ERROR: Tipo ya existente.'
 END
-GO;
-PRINT '--Creado SP: altaTipoParque--';
+GO
+PRINT '--Creado SP: altaTipoParque--'
 GO
 
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTipoParque'))
     DROP PROCEDURE PnSPabm.bajaTipoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaTipoParque (@tipo INT)
 AS
 BEGIN
@@ -77,7 +77,7 @@ GO
 
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionDescripcionTipoParque'))
     DROP PROCEDURE PnSPabm.modificacionDescripcionTipoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificacionDescripcionTipoParque (@tipo INT, @descripcionNEW varchar(30))
 AS
 BEGIN
@@ -119,7 +119,7 @@ GO
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaProvincia'))
     DROP PROCEDURE PnSPabm.altaProvincia
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaProvincia (@nombre varchar(15))
 AS
 BEGIN
@@ -135,7 +135,7 @@ GO
 --Baja
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaProvincia'))
     DROP PROCEDURE PnSPabm.bajaProvincia
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaProvincia (@provincia INT)
 AS
 BEGIN
@@ -168,7 +168,7 @@ GO
 --Modificacion
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarNombreProvincia'))
     DROP PROCEDURE PnSPabm.modificarNombreProvincia
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarNombreProvincia (@provincia INT, @nombreNEW varchar(15))
 AS
 BEGIN
@@ -210,7 +210,7 @@ GO
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaParque'))
     DROP PROCEDURE PnSPabm.altaParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaParque (@nombre varchar(30), @ubicacion INT, @superficie INT, @tipo INT)
 AS
 BEGIN
@@ -268,10 +268,10 @@ GO
 PRINT '--Creado SP: altaParque--';
 GO
 
---Modificar
+--ModificarNombre
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarNombreParque'))
     DROP PROCEDURE PnSPabm.modificarNombreParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarNombreParque (@parque INT, @nombreNEW varchar(30))
 AS
 BEGIN
@@ -321,9 +321,10 @@ GO
 PRINT '--Creado SP: modificarNombreParque--';
 GO
 
+--modificarSuperficie
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarSuperficieParque'))
     DROP PROCEDURE PnSPabm.modificarSuperficieParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarSuperficieParque (@parque INT, @SuperficieNEW INT)
 AS
 BEGIN
@@ -366,9 +367,10 @@ GO
 PRINT '--Creado SP: modificarSuperficieParque--';
 GO
 
+--bajaParque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaParque'))
     DROP PROCEDURE PnSPabm.bajaParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaParque (@parque INT)
 AS
 BEGIN
@@ -407,10 +409,10 @@ BEGIN
 			SET @errorLine = @errorLine + CHAR(13) + '- Existen horarios asociados a este parque. Delo de baja para continuar.'
 		END
 
-		IF EXISTS(SELECT 1 FROM PnTablas.TieneHistorial WHERE Parque = @parque)
+		IF EXISTS(SELECT 1 FROM PnTablas.Historial WHERE Parque = @parque) -- CAMBIO AQUÍ
 		BEGIN
 			SET @errorCount = @errorCount + 1
-			SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una entrada de historial asociada a este parque. Dela de baja para continuar.'
+			SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una entrada de historial asociada a este parque.'
 		END
 
 		IF EXISTS(SELECT 1 FROM PnTablas.Entrada WHERE Parque = @parque)
@@ -435,7 +437,7 @@ BEGIN
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.Parque
-		WHERE IDParque LIKE @parque
+		WHERE IDParque = @parque
 		END
 	ELSE
 		PRINT @errorLine
@@ -450,9 +452,10 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
+--altaDias
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaDias'))
     DROP PROCEDURE PnSPabm.altaDias
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaDias
 AS
 BEGIN
@@ -472,9 +475,10 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
+--altaHorario
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaHorario'))
     DROP PROCEDURE PnSPabm.altaHorario
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaHorario (@parque INT, @dia INT, @hapertura TIME, @hcierre TIME, @temporada varchar(10))
 AS
 BEGIN
@@ -507,15 +511,11 @@ BEGIN
 		SET @errorLine = @errorLine + CHAR(13) + '- Horario invalido.'
 	END
 
-	IF( 
-	(@temporada != 'Verano') OR 
-	(@temporada != 'Invierno') OR
-	(@temporada != 'Otoño') OR
-	(@temporada != 'Primavera'))
-	BEGIN
-		SET @errorCount = @errorCount + 1
-		SET @errorLine = @errorLine + CHAR(13) + '- Temporada invalida.'
-	END
+	IF (@temporada NOT IN ('Verano', 'Invierno', 'Otoño', 'Primavera'))
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Temporada invalida.'
+    END
 
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @parque) )
@@ -531,16 +531,13 @@ BEGIN
 	END
 
 	--controlDuplicidad
-	IF((@errorCount = 0) 
-	AND 
-	EXISTS(
-	SELECT 1
-	FROM
-	(SELECT Horario FROM PnTablas.Abre WHERE (Parque = @parque) AND (Dia = @dia)) AS A
-	JOIN
-	PnTablas.HorarioParque AS H
-	ON (A.Horario = H.IDHorarioP)
-	WHERE (H.HoraApertura = @hapertura) AND (H.HoraCierre = @hcierre) AND (Temporada LIKE @temporada)))
+	IF((@errorCount = 0) AND EXISTS(
+		SELECT 1
+		FROM
+		(SELECT Horario FROM PnTablas.Abre WHERE (Parque = @parque) AND (Dia = @dia)) AS A
+		JOIN PnTablas.HorarioParque AS H ON (A.Horario = H.IDHorarioP)
+		WHERE (H.HoraApertura = @hapertura) AND (H.HoraCierre = @hcierre) AND (Temporada LIKE @temporada)
+	))
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Horario ya presente para ese parque.'
@@ -573,9 +570,10 @@ GO
 PRINT '--Creado SP: altaHorario--';
 GO
 
+--bajaHorario
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHorarioOne'))
     DROP PROCEDURE PnSPabm.bajaHorarioOne
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaHorarioOne (@horario INT)
 AS
 BEGIN
@@ -608,9 +606,10 @@ GO
 PRINT '--Creado SP: bajaHorarioOne--';
 GO
 
+--bajaHorario
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHorarioAll'))
     DROP PROCEDURE PnSPabm.bajaHorarioAll
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaHorarioAll (@parque INT)
 AS
 BEGIN
@@ -663,9 +662,10 @@ GO
 PRINT '--Creado SP: bajaHorarioAll--';
 GO
 
+--modificarHorario
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarHorario'))
     DROP PROCEDURE PnSPabm.modificarHorario
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarHorario (@horario INT, @haperturaNEW TIME, @hcierreNEW TIME)
 AS
 BEGIN
@@ -717,9 +717,10 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
+--altaTelefono
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTelefonoParque'))
     DROP PROCEDURE PnSPabm.altaTelefonoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaTelefonoParque (@numero varchar(12), @parque INT)
 AS
 BEGIN
@@ -752,9 +753,10 @@ GO
 PRINT '--Creado SP: altaTelefonoParque--';
 GO
 
+--bajaTelefono
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTelefonoParque'))
     DROP PROCEDURE PnSPabm.bajaTelefonoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaTelefonoParque (@numero varchar(12), @parque INT)
 AS
 BEGIN
@@ -783,16 +785,17 @@ BEGIN
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.TelefonoParque
-		WHERE (NumeroParque LIKE @numero) AND (Parque = @parque)
+		WHERE NumeroParque = @numero AND Parque = @parque
 	END
 END;
 GO
 PRINT '--Creado SP: bajaTelefonoParque--';
 GO
 
+--modificarTelefono
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarTelefonoParque'))
     DROP PROCEDURE PnSPabm.modificarTelefonoParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarTelefonoParque (@numeroOLD varchar(12), @numeroNEW varchar(12), @parque INT)
 AS
 BEGIN
@@ -822,7 +825,7 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.TelefonoParque
 		SET NumeroParque = @numeroNEW
-		WHERE (NumeroParque LIKE @numeroOLD) AND (Parque = @parque)
+		WHERE NumeroParque = @numeroOLD AND Parque = @parque
 	END
 END;
 GO

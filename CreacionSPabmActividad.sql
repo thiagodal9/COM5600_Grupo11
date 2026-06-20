@@ -20,9 +20,13 @@ GO
 PRINT '--Creando SPabm para tablas Actividad...--';
 GO
 
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+
+-- Alta Tipo Actividad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTipoActividad'))
     DROP PROCEDURE PnSPabm.altaTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaTipoActividad (@descripcion varchar(30), @costo DECIMAL(7, 2))
 AS
 BEGIN
@@ -49,7 +53,7 @@ BEGIN
 	IF ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE DescripcionAct LIKE @descripcion) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT '- Tipo ya presente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo ya presente.'
 	END
 
 	IF(@errorCount = 0)
@@ -61,9 +65,10 @@ BEGIN
 END;
 GO
 
+-- Modificar Descripcion
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarDescripcionTipoActividad'))
     DROP PROCEDURE PnSPabm.modificarDescripcionTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarDescripcionTipoActividad (@tipo INT, @descripcionNEW varchar(30))
 AS
 BEGIN
@@ -97,7 +102,7 @@ BEGIN
 	IF ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE DescripcionAct LIKE @descripcionNEW) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT '- La nueva descripcion ya esta presente para otro tipo.'
+		SET @errorLine = @errorLine + CHAR(13) + '- La nueva descripcion ya esta presente para otro tipo.'
 	END
 
 	IF(@errorCount = 0)
@@ -111,9 +116,10 @@ BEGIN
 END;
 GO
 
+-- Modificar Costo
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarCostoTipoActividad'))
     DROP PROCEDURE PnSPabm.modificarCostoTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarCostoTipoActividad (@tipo INT, @costoNEW DECIMAL(7, 2))
 AS
 BEGIN
@@ -154,41 +160,44 @@ BEGIN
 END;
 GO
 
+-- Baja Tipo Actividad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTipoActividad'))
     DROP PROCEDURE PnSPabm.bajaTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaTipoActividad (@tipo INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	--controlValidezDatos
 	IF( (@tipo IS NULL) OR (@tipo <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo invalido.'
 	END
 
 	--controlExistencia
 	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct LIKE @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo inexistente.'
 	END
 
 	--controlReferencias
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE Tipo = @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Existe al menos una actividad relacionada a este Tipo. Desasigne para continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una actividad relacionada. Desasigne para continuar.'
 	END
 
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.TipoActividad
-		WHERE DescripcionAct = @tipo
+		WHERE IDTipoAct = @tipo
 	END
 	ELSE
 		PRINT @errorLine
@@ -198,9 +207,10 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
+-- altaActividad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaActividad'))
     DROP PROCEDURE PnSPabm.altaActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaActividad (@nombre varchar(30), @duracion INT, @cupo INT, @parque INT, @tipo INT)
 AS
 BEGIN
@@ -271,9 +281,10 @@ BEGIN
 END;
 GO
 
+-- modificarNombreActividad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarNombreActividad'))
     DROP PROCEDURE PnSPabm.modificarNombreActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarNombreActividad (@actividad INT, @nombreNEW varchar(30))
 AS
 BEGIN
@@ -314,9 +325,10 @@ BEGIN
 END;
 GO
 
+-- modificarDuracionActividadParque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarDuracionActividadParque'))
     DROP PROCEDURE PnSPabm.modificarDuracionActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarDuracionActividadParque (@actividad INT, @duracionNEW INT)
 AS
 BEGIN
@@ -350,16 +362,17 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.Actividad
 		SET Duracion = @duracionNEW
-		WHERE IDActividad LIKE @actividad
+		WHERE IDActividad = @actividad
 	END
 	ELSE
 		PRINT @errorLine
 END;
 GO
 
+-- modificarCupoActividadParque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarCupoActividadParque'))
     DROP PROCEDURE PnSPabm.modificarCupoActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarCupoActividadParque (@actividad INT, @cupoNEW INT)
 AS
 BEGIN
@@ -393,21 +406,21 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.Actividad
 		SET CupoMax  = @cupoNEW
-		WHERE IDActividad LIKE @actividad
+		WHERE IDActividad = @actividad
 	END
 	ELSE
 		PRINT @errorLine
 END;
 GO
 
+-- bajaActividadParque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaActividadParque'))
     DROP PROCEDURE PnSPabm.bajaActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaActividadParque (@actividad INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
-
 	SET @errorCount = 0
 
 	--controlValidezDatos
