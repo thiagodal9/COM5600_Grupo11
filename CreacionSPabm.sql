@@ -14,8 +14,8 @@ use ParquesNacionales
 go
 
 --Creo el esquema para los SP
---create schema PnSPabm
---go
+create schema PnSPabm
+go
 
 
 /*
@@ -114,8 +114,8 @@ abm Venta
 */
 
 --Alta
-create procedure PnSPabm.altaVenta
-@idActividad int,
+create procedure PnSPabm.altaPagoVenta
+@idPagoVenta int,
 @idTipoActividad int,
 @fechaActividad date,
 @idParque int,
@@ -202,94 +202,9 @@ begin
 end
 go
 
-/*
-================================================================
-abm Entrada
-================================================================
-*/
 
---Alta
-create procedure PnSPabm.altaEntrada
-@idVenta int,
-@precio decimal(10,2),
-@descripcion varchar,
-@cantidad int
-as 
-begin
-	if not exists  (select idVenta from PnTablas.Venta where idVenta = @idVenta)
-		throw 50001, 'El idVenta es inválido.',1;
 
-	begin transaction
-	begin try
-		insert into PnTablas.Entrada(idVenta, precio, descripcion, cantidad) values
-		(@idVenta, @precio, @descripcion, @cantidad);
-		commit transaction;
-		print 'Entrada registrada con exito';
-	end try
-	begin catch
-		declare @msj nvarchar(100) = error_message();
-		declare @numError int = error_number();
-		print concat('ERROR (', @numError,')',@msj);
-	end catch
-end
-go
 
---Baja
-create procedure PnSPabm.bajaEntrada
-@idEntrada int
-as
-begin
-	if not exists (select idEntrada from PnTablas.Entrada where idEntrada = @idEntrada)
-		throw 50001, 'El idEntrada es inválido.',1;
-
-	begin transaction
-	begin try
-		delete from PnTablas.Entrada
-		where idEntrada = @idEntrada;
-		commit transaction;
-		print 'Entrada eliminada exitosamente.';
-	end try
-	begin catch
-		declare @msj nvarchar(100) = error_message();
-		declare @numError int = error_number();
-		print concat('ERROR (', @numError,')',@msj);
-	end catch
-end
-go
-
---Modificacion
-create procedure PnSPabm.modificacionEntrada
-@idEntrada int,
-@idVentaNueva int,
-@precioNueva decimal(10,2),
-@descripcionNueva varchar,
-@cantidadNueva int
-as
-begin
-	if not exists (select idEntrada from PnTablas.Entrada where idEntrada = @idEntrada)
-		throw 5001, 'El idEntrada es inválido.',1;
-	
-	else if not exists (select idVenta from PnTablas.Venta where idVenta = @idVentaNueva)
-		throw 50002, 'El idVenta es inválido.', 1;
-	
-	begin transaction
-	begin try
-		update PnTablas.Entrada
-		set idVenta = @idVentaNueva,
-			precio = @precioNueva,
-			descripcion = @descripcionNueva,
-			cantidad = @cantidadNueva
-		where idEntrada = @idEntrada;
-		commit transaction;
-		print 'La modificación de la entrada se realizó exitosamente.';
-	end try
-	begin catch
-		declare @msj nvarchar(100) = error_message();
-		declare @numError int = error_number();
-		print concat('ERROR (', @numError,')',@msj);
-	end catch
-end
-go
 
 
 

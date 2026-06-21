@@ -10,6 +10,7 @@ LEOPALDI PINAZZI AGUSTIN EMANUEL
 En este script se realiza la creacion de la base de datos, del SCHEMA que contendra las tablas y de las tablas de acuerdo al DER entregado
 */
 
+--Cada creacion LA QUE SEA con if not exists
 
 --Creación de la base de datos
 create database ParquesNacionales
@@ -19,8 +20,8 @@ use ParquesNacionales
 go
 
 --Creo el esquema donde voy a crear las tablas
---create schema PnTablas
---go
+create schema PnTablas
+go
 
 --Creación de tablas
 
@@ -47,10 +48,11 @@ TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Provincia')
 begin
 create table PnTablas.Provincia(
 idProvincia int identity(1,1) primary key,
-nombre char(30)
+nombreProvincia char(30)
 )
 end
 go
+
 
 --Tabla TipoParque
 if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
