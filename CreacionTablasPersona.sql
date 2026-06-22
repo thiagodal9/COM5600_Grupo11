@@ -34,7 +34,7 @@ BEGIN
 	CREATE TABLE PnTablas.Persona
 	(
 		IDPersona INT IDENTITY(1,1) PRIMARY KEY,
-		DNI INT NOT NULL UNIQUE,
+		DNI int not null constraint UQ_Persona_DNI unique,
 		NombrePersona varchar(20),
 		Apellido varchar(20),
 		Telefono varchar(12),
