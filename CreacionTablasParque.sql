@@ -56,7 +56,7 @@ BEGIN
 	CREATE TABLE PnTablas.Parque
 	(
 		IDParque INT IDENTITY(1, 1) PRIMARY KEY,
-		NombreParque varchar(30),
+		NombreParque varchar(100),
 		Ubicacion INT,
 		Superficie INT,
 		Tipo INT,
