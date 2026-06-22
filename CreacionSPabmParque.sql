@@ -211,7 +211,7 @@ GO
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaParque'))
     DROP PROCEDURE PnSPabm.altaParque
 GO;
-CREATE PROCEDURE PnSPabm.altaParque (@nombre varchar(30), @ubicacion INT, @superficie INT, @tipo INT)
+CREATE PROCEDURE PnSPabm.altaParque (@nombre varchar(100), @ubicacion INT, @superficie INT, @tipo INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -272,7 +272,7 @@ GO
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarNombreParque'))
     DROP PROCEDURE PnSPabm.modificarNombreParque
 GO;
-CREATE PROCEDURE PnSPabm.modificarNombreParque (@parque INT, @nombreNEW varchar(30))
+CREATE PROCEDURE PnSPabm.modificarNombreParque (@parque INT, @nombreNEW varchar(100))
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -510,7 +510,7 @@ BEGIN
 	IF( 
 	(@temporada != 'Verano') OR 
 	(@temporada != 'Invierno') OR
-	(@temporada != 'Otoño') OR
+	(@temporada != 'OtoÃ±o') OR
 	(@temporada != 'Primavera'))
 	BEGIN
 		SET @errorCount = @errorCount + 1
