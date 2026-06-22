@@ -62,7 +62,7 @@ BEGIN
 CREATE TABLE PnTablas.Parque
 (
 	IDParque INT IDENTITY(1, 1) PRIMARY KEY,
-	NombreParque varchar(30),
+	NombreParque varchar(100),
 	Ubicacion INT,
 	Superficie INT,
 	Tipo INT,
@@ -241,19 +241,18 @@ GO
 --La duracion se toma en minutos. Ejem: 120minutos
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Actividad')
 BEGIN
-CREATE TABLE PnTablas.Actividad
-(
-	IDActividad INT IDENTITY(1, 1) PRIMARY KEY,
-	NombreActividad char(30),
-	Duracion INT,
-	CupoMax INT,
-	Parque INT,
-	Tipo INT,
-	Guia INT NULL,
-	FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
-	FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct),
-	FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia)
-);
+	CREATE TABLE PnTablas.Actividad
+	(
+		IDActividad INT IDENTITY(1, 1) PRIMARY KEY,
+		NombreActividad char(30),
+		Duracion INT,
+		CupoMax INT,
+		Parque INT,
+		Tipo INT,
+		Guia INT NULL,
+		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
+		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct)
+	);
 END;
 GO
 
@@ -265,7 +264,9 @@ BEGIN
 		Actividad INT,
 		FechaActividad DATE,
 		HoraInicio TIME,
+		Guia INT NULL,
 		FOREIGN KEY(Actividad) REFERENCES PnTablas.Actividad(IDActividad),
+		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia),
 		PRIMARY KEY(Actividad, FechaActividad)
 	)
 END;
