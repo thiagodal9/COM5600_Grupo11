@@ -66,10 +66,11 @@ BEGIN
 		Actividad INT,
 		FechaActividad DATE,
 		HoraInicio TIME,
+		Guia INT NULL,
 		FOREIGN KEY(Actividad) REFERENCES PnTablas.Actividad(IDActividad),
-		PRIMARY KEY(Actividad, FechaActividad)
+		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia),
+		PRIMARY KEY(Actividad, FechaActividad, HoraInicio)
 	)
 	PRINT '--Creada Tabla: HorarioActividad--'
 END;
 GO
-
