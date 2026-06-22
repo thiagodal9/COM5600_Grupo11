@@ -13,7 +13,7 @@ LEOPALDI PINAZZI AGUSTIN EMANUEL
 /*
 ----Tablas Principales: Persona, Guardaparque, Guia
 ----Subtablas: Especialidad, Historial
-----Tablas Intermedias: tieneEspecialidad, tieneHistorial
+----Tablas Intermedias: tieneEspecialidad
 */
 
 IF EXISTS (SELECT name FROM sys.databases WHERE name = 'ParquesNacionales')
@@ -34,11 +34,11 @@ BEGIN
 	CREATE TABLE PnTablas.Persona
 	(
 		IDPersona INT IDENTITY(1,1) PRIMARY KEY,
-		DNI INT,
+		DNI int not null constraint UQ_Persona_DNI unique,
 		NombrePersona varchar(20),
 		Apellido varchar(20),
 		Telefono varchar(12),
-		Rol varchar(10)
+		Rol varchar(10) NOT NULL CHECK (Rol IN ('Guardaparque', 'Guia'))
 	)
 	PRINT '--Creada Tabla: Persona--'
 END;
@@ -51,7 +51,7 @@ BEGIN
 	(
 		IDGuardaParque INT,
 		Parque INT NULL,
-		Estado char(10),
+		Estado varchar(10),
 		FechaInicio DATE,
 		FOREIGN KEY(IDGuardaParque) REFERENCES PnTablas.Persona(IDPersona),
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
@@ -67,7 +67,7 @@ BEGIN
 	CREATE TABLE PnTablas.Guia
 	(
 		IDGuia INT,
-		Titulo char(30),
+		Titulo varchar(100),
 		VencimientoHabilitacion DATE,
 		NumeroHabilitacion INT,
 		FOREIGN KEY(IDGuia) REFERENCES PnTablas.Persona(IDPersona),
@@ -86,7 +86,7 @@ BEGIN
 	CREATE TABLE PnTablas.Especialidad
 	(
 		IDEspecialidad INT IDENTITY(1,1) PRIMARY KEY,
-		DescripcionEspecialidad varchar(20)
+		DescripcionEspecialidad varchar(20) NOT NULL UNIQUE
 	)
 	PRINT '--Creada Tabla: Especialidad--';
 END
@@ -98,31 +98,17 @@ BEGIN
 	CREATE TABLE PnTablas.Historial
 	(
 		IDregistro INT IDENTITY(1, 1) PRIMARY KEY,
+		Guardaparque INT NOT NULL,
+		Parque INT NOT NULL,
 		FechaInicio DATE,
 		FechaEgreso DATE,
-		RazonEgreso char(40)
+		RazonEgreso varchar(40)
 	)
 	PRINT '--Creada Tabla: Historial--';
 END;
 GO
 
 PRINT '--Creando tablas intermedias...';
-GO
-
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHistorial')
-BEGIN
-	CREATE TABLE PnTablas.TieneHistorial
-	(
-		Guardaparque INT,
-		Parque INT,
-		Registro INT,
-		FOREIGN KEY(Guardaparque) REFERENCES PnTablas.Guardaparque(IDGuardaparque),
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
-		FOREIGN KEY(Registro) REFERENCES PnTablas.Historial(IDregistro),
-		PRIMARY KEY(Registro, Parque)
-	)
-	PRINT '--Creada Tabla: TieneHistorial--'
-END;
 GO
 
 --Tabla TieneEspecialidad

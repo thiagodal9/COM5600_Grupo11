@@ -30,8 +30,8 @@ BEGIN
 	CREATE TABLE PnTablas.TipoActividad
 	(
 		IDTipoAct INT IDENTITY (1, 1) PRIMARY KEY,
-		DescripcionAct char(30),
-		CostoAct DECIMAL(7, 2)
+		DescripcionAct varchar(30) NOT NULL UNIQUE,
+		CostoAct DECIMAL(7, 2) NOT NULL
 	);
 	PRINT '--Creada Tabla: TipoActividad--'
 END;
@@ -44,11 +44,11 @@ BEGIN
 	CREATE TABLE PnTablas.Actividad
 	(
 		IDActividad INT IDENTITY(1, 1) PRIMARY KEY,
-		NombreActividad char(30),
-		Duracion INT,
-		CupoMax INT,
-		Parque INT,
-		Tipo INT,
+		NombreActividad varchar(30),
+		Duracion INT NOT NULL,
+		CupoMax INT NOT NULL,
+		Parque INT NOT NULL,
+		Tipo INT NOT NULL,
 		Guia INT NULL,
 		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct),
@@ -65,9 +65,9 @@ BEGIN
 	(
 		Actividad INT,
 		FechaActividad DATE,
-		HoraInicio TIME,
+		HoraInicio TIME NOT NULL,
 		FOREIGN KEY(Actividad) REFERENCES PnTablas.Actividad(IDActividad),
-		PRIMARY KEY(Actividad, FechaActividad)
+		PRIMARY KEY(Actividad, FechaActividad, HoraInicio)
 	)
 	PRINT '--Creada Tabla: HorarioActividad--'
 END;
