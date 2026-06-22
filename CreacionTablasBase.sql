@@ -213,7 +213,7 @@ GO
 --Tabla TieneHistorial
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHistorial')
 BEGIN
-	CREATE TABLE TieneHistorial
+	CREATE TABLE PnTablas.TieneHistorial
 	(
 		Guardaparque INT,
 		Parque INT,
@@ -267,7 +267,7 @@ BEGIN
 		Guia INT NULL,
 		FOREIGN KEY(Actividad) REFERENCES PnTablas.Actividad(IDActividad),
 		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia),
-		PRIMARY KEY(Actividad, FechaActividad)
+		PRIMARY KEY(Actividad, FechaActividad, HoraInicio)
 	)
 END;
 GO
@@ -390,7 +390,7 @@ GO
 --Tabla #ventaActividades
 IF OBJECT_ID('tempdb..#ventaActividades') IS NULL
 BEGIN
-	CREATE TABLE #ventaActividades
+	CREATE TABLE PnTablas.#ventaActividades
 	(
 		IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
 		Actividad INT,
