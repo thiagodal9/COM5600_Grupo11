@@ -311,8 +311,7 @@ BEGIN
 		Importe DECIMAL(10,2),
 		FechaTransaccion DATE,
 		Item char(30),
-		Metodo char(30),
-		Venta INT
+		Metodo char(30)
 	)
 END;
 GO
