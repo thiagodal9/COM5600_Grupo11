@@ -14,8 +14,12 @@ En este script se realiza la creacion de las tablas de Entrada
 Tablas Principales: Entrada, TipoEntrada
 */
 
-use ParquesNacionales
-go
+IF EXISTS (SELECT name FROM sys.databases WHERE name = 'ParquesNacionales')
+BEGIN
+	USE ParquesNacionales
+	PRINT '--Usando BD: ParquesNacionales--' 
+END;
+GO
 
 --Creación de tablas
 
@@ -57,21 +61,3 @@ BEGIN
     )
 END;
 GO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
