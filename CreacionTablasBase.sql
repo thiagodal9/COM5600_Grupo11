@@ -309,7 +309,7 @@ BEGIN
 	(
 		IDPagoVenta INT IDENTITY(1,1) PRIMARY KEY,
 		Importe DECIMAL(10,2),
-		FechaTransaccion DATE,
+		FechaHoraTransaccion DATETIME,
 		Item char(30),
 		Metodo char(30)
 	)
