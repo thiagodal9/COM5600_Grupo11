@@ -381,6 +381,7 @@ BEGIN
 		IDvEntrada INT IDENTITY(1, 1) PRIMARY KEY,
 		Entrada INT,
 		Cantidad INT,
+		FechaAcceso DATE,
 		FOREIGN KEY(Entrada) REFERENCES PnTablas.Entrada(IDEntrada)
 	)
 END;
