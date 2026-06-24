@@ -49,10 +49,8 @@ BEGIN
 		CupoMax INT,
 		Parque INT,
 		Tipo INT,
-		Guia INT NULL,
 		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
-		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct),
-		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia)
+		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct)
 	);
 	PRINT '--Creada Tabla: Actividad--'
 END;
