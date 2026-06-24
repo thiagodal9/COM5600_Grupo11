@@ -365,10 +365,11 @@ BEGIN
 		Pago INT,
 		Actividad INT,
 		FechaActividad DATE,
+		HoraInicio TIME,
 		Cantidad INT,
 		FOREIGN KEY(Pago) REFERENCES PnTablas.PagoVenta(IDPagoVenta),
-		FOREIGN KEY(Actividad, FechaActividad) REFERENCES PnTablas.HorarioActividad(Actividad, FechaActividad),
-		PRIMARY KEY(Pago, Actividad, FechaActividad)
+		FOREIGN KEY(Actividad, FechaActividad, HoraInicio) REFERENCES PnTablas.HorarioActividad(Actividad, FechaActividad, HoraInicio),
+		PRIMARY KEY(Pago, Actividad, FechaActividad, HoraInicio)
 	)
 END;
 GO
