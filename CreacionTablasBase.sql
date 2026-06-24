@@ -382,8 +382,7 @@ BEGIN
 		IDvEntrada INT IDENTITY(1, 1) PRIMARY KEY,
 		Entrada INT,
 		Cantidad INT,
-		FechaAcceso DATE,
-		FOREIGN KEY(Entrada) REFERENCES PnTablas.Entrada(IDEntrada)
+		FechaAcceso DATE
 	)
 END;
 GO
@@ -396,8 +395,7 @@ BEGIN
 		IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
 		Actividad INT,
 		FechaActividad DATE,
-		Cantidad INT,
-		FOREIGN KEY(Actividad, FechaActividad) REFERENCES PnTablas.HorarioActividad(Actividad, FechaActividad)
+		Cantidad INT
 	)
 END;
 GO
