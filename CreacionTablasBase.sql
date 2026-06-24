@@ -394,6 +394,7 @@ BEGIN
 		IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
 		Actividad INT,
 		FechaActividad DATE,
+		HoraInicio TIME,
 		Cantidad INT
 	)
 END;
