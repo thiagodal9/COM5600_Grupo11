@@ -395,7 +395,8 @@ BEGIN
 		Actividad INT,
 		FechaActividad DATE,
 		HoraInicio TIME,
-		Cantidad INT
+		Cantidad INT,
+		ID INT
 	)
 END;
 GO
