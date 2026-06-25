@@ -26,7 +26,7 @@ GO
 --altaPersona
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaPersona'))
     DROP PROCEDURE PnSPabm.altaPersona
-GO;
+GO
 create procedure PnSPabm.altaPersona
 @dni int,
 @nombre varchar(20),
@@ -76,7 +76,7 @@ GO
 --modificacionPersona
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionPersona'))
     DROP PROCEDURE PnSPabm.modificacionPersona
-GO;
+GO
 create procedure PnSPabm.modificacionPersona
 @IDPersona int,
 @dniNuevo int = NULL,
@@ -155,7 +155,7 @@ GO
 --De haberlas, primero se pide quitar las dependencias con los SP correspondientes.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaPersona'))
     DROP PROCEDURE PnSPabm.bajaPersona
-GO;
+GO
 create procedure PnSPabm.bajaPersona
 @IDPersona int,
 @razon varchar(40)
@@ -213,7 +213,7 @@ GO
 --Solo registra al guardaparques, no asigna. Ingresa como inactivo.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaGuardaParque'))
     DROP PROCEDURE PnSPabm.altaGuardaParque
-GO;
+GO
 create procedure PnSPabm.altaGuardaParque
 @IDPersona INT
 as
@@ -260,8 +260,8 @@ GO
 --asignarGuardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.asignarGuardaparque'))
     DROP PROCEDURE PnSPabm.asignarGuardaparque
-GO;
-CREATE PROCEDURE PnSPtrans.asignarGuardaparque (@IDPersona INT, @Parque varchar(30))
+GO
+CREATE PROCEDURE PnSPabm.asignarGuardaparque (@IDPersona INT, @Parque varchar(30))
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -315,8 +315,8 @@ GO
 --reasignarGuardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reasignarGuardaparque'))
     DROP PROCEDURE PnSPabm.reasignarGuardaparque
-GO;
-CREATE PROCEDURE PnSPtrans.reasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
+GO
+CREATE PROCEDURE PnSPabm.reasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -382,8 +382,8 @@ GO
 --desasignarGuardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.desasignarGuardaparque'))
     DROP PROCEDURE PnSPabm.desasignarGuardaparque
-GO;
-CREATE PROCEDURE PnSPtrans.desasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
+GO
+CREATE PROCEDURE PnSPabm.desasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -452,8 +452,8 @@ GO
 --bajaGuardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaGuardaparque'))
     DROP PROCEDURE PnSPabm.bajaGuardaparque
-GO;
-CREATE PROCEDURE PnSPtrans.bajaGuardaparque (@IDPersona INT, @razon varchar(40))
+GO
+CREATE PROCEDURE PnSPabm.bajaGuardaparque (@IDPersona INT, @razon varchar(40))
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -505,28 +505,18 @@ GO
 --altaHistorial
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaHistorial'))
     DROP PROCEDURE PnSPabm.altaHistorial
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaHistorial (@Guardaparque INT, @parque INT, @fechaIni DATE, @fechaFin DATE, @razon varchar(40))
 AS
 BEGIN
-    DECLARE @IDout TABLE(ID INT)
-
     IF( EXISTS(
-    SELECT 1 
-    FROM PnTablas.tieneHistorial AS tH 
-    JOIN 
-    PnTablas.Historial AS H 
-    ON (tH.registro = H.IDregistro) 
-    WHERE tH.Guardaparque = @Guardaparque AND H.FechaInicio = @fechaIni) )
+        SELECT 1 FROM PnTablas.Historial 
+        WHERE Guardaparque = @Guardaparque AND FechaInicio = @fechaIni) )
         PRINT 'ERROR: registro ya presente.'
     ELSE
     BEGIN
-        INSERT INTO PnTablas.Historial (FechaInicio, FechaEgreso, RazonEgreso)
-        OUTPUT inserted.IDregistro INTO @IDout(ID)
-        VALUES (@fechaIni, @fechaFin, @razon)
-
-        INSERT INTO PnTablas.tieneHistorial (Guardaparque, Parque, Registro)
-		VALUES (@Guardaparque, @parque, (SELECT ID FROM @IDout))
+        INSERT INTO PnTablas.Historial (Guardaparque, Parque, FechaInicio, FechaEgreso, RazonEgreso)
+        VALUES (@Guardaparque, @parque, @fechaIni, @fechaFin, @razon)
     END
 END;
 GO
@@ -536,22 +526,15 @@ GO
 --modificacionRazonHistorial
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionRazonHistorial'))
     DROP PROCEDURE PnSPabm.modificacionRazonHistorial
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificacionRazonHistorial (@Guardaparque INT, @parque INT, @fechaFin DATE, @razonNEW varchar(40))
 AS
 BEGIN
     UPDATE PnTablas.Historial
     SET RazonEgreso = @razonNEW
-    WHERE IDRegistro = 
-    (
-        SELECT H.IDRegistro
-        FROM 
-        PnTablas.tieneHistorial AS tH 
-        JOIN
-        PnTablas.Historial AS H
-        ON (th.registro = H.IDRegistro)
-        WHERE th.Parque = @parque AND th.Guardaparque = @Guardaparque AND H.FechaInicio = @fechaFin
-    )
+    WHERE Guardaparque = @Guardaparque 
+        AND Parque = @parque 
+        AND FechaInicio = @fechaFin
 END;
 GO
 PRINT '--Creado SP: modificacionRazonHistorial--';
@@ -561,22 +544,12 @@ GO
 --baja de todo el historial de un Guardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHistorial'))
     DROP PROCEDURE PnSPabm.bajaHistorial
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaHistorial (@Guardaparque INT)
 AS
 BEGIN
-    DECLARE @IDregistros TABLE(ID INT)
-
-    INSERT INTO @IDregistros
-    SELECT Registro
-    FROM PnTablas.tieneHistorial
-    WHERE Guardaparque = @Guardaparque
-
-    DELETE FROM PnTablas.tieneHistorial
-    WHERE Guardaparque = @Guardaparque
-
     DELETE FROM PnTablas.Historial
-    WHERE IDRegistro IN (SELECT ID FROM @IDregistros)
+    WHERE Guardaparque = @Guardaparque
 END;
 GO
 PRINT '--Creado SP: bajaHistorial--';
@@ -588,7 +561,7 @@ GO
 --altaGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaGuia'))
     DROP PROCEDURE PnSPabm.altaGuia
-GO;
+GO
 create procedure PnSPabm.altaGuia
     @idPersona int,
     @titulo varchar(100),
@@ -651,7 +624,7 @@ GO
 --bajaGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaGuia'))
     DROP PROCEDURE PnSPabm.bajaGuia
-GO;
+GO
 create procedure PnSPabm.bajaGuia
 @idPersona int
 as
@@ -687,7 +660,7 @@ GO
 --modificacionGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionGuia'))
     DROP PROCEDURE PnSPabm.modificacionGuia
-GO;
+GO
 create procedure PnSPabm.modificacionGuia
     @idPersona                   int,
     @tituloNuevo                 varchar(100) = null,
@@ -702,13 +675,13 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
-    IF(@numeroHabilitacionNuevo <= 0)
+    IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@numeroHabilitacionNuevo <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- Numero de habilitacion invalido.'
     END
 
-    IF( @vencimientoHabilitacionNuevo <= cast(getdate() as date) )
+    IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@vencimientoHabilitacionNuevo <= cast(getdate() as date)) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion vencida.'
@@ -741,7 +714,7 @@ GO
 --altaEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaEspecialidad'))
     DROP PROCEDURE PnSPabm.altaEspecialidad
-GO;
+GO
 create procedure PnSPabm.altaEspecialidad
 @descripcion varchar(20)
 as
@@ -750,7 +723,13 @@ begin
 
     SET @errorCount = 0
 
-    if exists (select 1 from PnTablas.Especialidad where DescripcionEspecialidad = @descripcion)
+    IF(@descripcion IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        PRINT 'ERROR: Descripcion invalida.'
+    END
+
+    if( (@errorCount = 0) AND exists(select 1 from PnTablas.Especialidad where DescripcionEspecialidad = @descripcion) )
     BEGIN
         SET @errorCount = @errorCount + 1
         PRINT 'ERROR: Ya existe una especialidad con esa descripcion.'
@@ -766,26 +745,43 @@ GO
 --modificacionEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionEspecialidad'))
     DROP PROCEDURE PnSPabm.modificacionEspecialidad
-GO;
+GO
 create procedure PnSPabm.modificacionEspecialidad
 @idEspecialidad    int,
 @descripcionNueva  varchar(20)
 as
 begin
     DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
 
     SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
 
-    if not exists (select 1 from PnTablas.Especialidad where idEspecialidad = @idEspecialidad)
+    --controlValidez
+    IF( (@idEspecialidad IS NULL) OR (@idEspecialidad <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: La especialidad a modificar no existe.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Especialidad invalida.'
     END
 
+    IF(@descripcionNueva IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Nueva Descripcion invalida.'
+    END
+
+    --controlExistencia
+    if( (@errorCount = 0) AND not exists (select 1 from PnTablas.Especialidad where idEspecialidad = @idEspecialidad) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- La especialidad a modificar no existe.'
+    END
+
+    --controlDuplicidad
     if ( (@errorCount = 0) AND exists (select 1 from PnTablas.Especialidad where DescripcionEspecialidad = @descripcionNueva and idEspecialidad != @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Ya existe otra especialidad con esa descripcion.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Ya existe otra especialidad con esa descripcion.'
     END
 
     IF(@errorCount = 0)
@@ -794,6 +790,8 @@ begin
         set DescripcionEspecialidad = @descripcionNueva
         where idEspecialidad = @idEspecialidad;
     END
+    ELSE
+        PRINT @errorLine
 end;
 go
 PRINT '--Creado SP: modificacionEspecialidad--';
@@ -802,22 +800,33 @@ GO
 --bajaEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaEspecialidad'))
     DROP PROCEDURE PnSPabm.bajaEspecialidad
-GO;
+GO
 create procedure PnSPabm.bajaEspecialidad
 @idEspecialidad int
 as
 begin
     DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
 
     SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
 
-    if not exists (select 1 from PnTablas.Especialidad where idEspecialidad = @idEspecialidad)
+    --controlValidez
+    IF( (@idEspecialidad IS NULL) OR (@idEspecialidad <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        PRINT 'ERROR: Especialidad invalida.'
+    END
+
+    --controlExistencia
+    if( (@errorCount = 0) AND not exists (select 1 from PnTablas.Especialidad where idEspecialidad = @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
         PRINT 'ERROR: La especialidad a modificar no existe.'
     END
 
-    if exists (select 1 from PnTablas.TieneEspecialidad where Guia = @idEspecialidad)
+    --controlReferencia
+    if( (@errorCount = 0) AND exists(select 1 from PnTablas.TieneEspecialidad where Guia = @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
         PRINT 'ERROR: Hay guias con esa especialidad. Desvinculelos antes de continuar.'
@@ -833,8 +842,8 @@ GO
 --asignarEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.asignarEspecialidad'))
     DROP PROCEDURE PnSPabm.asignarEspecialidad
-GO;
-CREATE PROCEDURE asignarEspecialidad (@guia INT, @especialidad INT)
+GO
+CREATE PROCEDURE PnSPabm.asignarEspecialidad (@guia INT, @especialidad INT)
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -892,8 +901,8 @@ GO
 --desasignarEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.desasignarEspecialidad'))
     DROP PROCEDURE PnSPabm.desasignarEspecialidad
-GO;
-CREATE PROCEDURE desasignarEspecialidad (@guia INT, @especialidad INT)
+GO
+CREATE PROCEDURE PnSPabm.desasignarEspecialidad (@guia INT, @especialidad INT)
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -935,8 +944,8 @@ GO
 --desasignarEspecialidades
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.desasignarEspecialidades'))
     DROP PROCEDURE PnSPabm.desasignarEspecialidades
-GO;
-CREATE PROCEDURE desasignarEspecialidades (@guia INT)
+GO
+CREATE PROCEDURE PnSPabm.desasignarEspecialidades (@guia INT)
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -972,8 +981,8 @@ GO
 --reasignarEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reasignarEspecialidad'))
     DROP PROCEDURE PnSPabm.reasignarEspecialidad
-GO;
-CREATE PROCEDURE reasignarEspecialidad (@guia INT, @especialidadOLD INT, @especialidadNEW INT)
+GO
+CREATE PROCEDURE PnSPabm.reasignarEspecialidad (@guia INT, @especialidadOLD INT, @especialidadNEW INT)
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -1032,8 +1041,8 @@ GO
 --asignarGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.asignarGuia'))
     DROP PROCEDURE PnSPabm.asignarGuia
-GO;
-CREATE PROCEDURE PnSPtrans.asignarGuia (@guia INT, @actividad INT)
+GO
+CREATE PROCEDURE PnSPabm.asignarGuia (@guia INT, @actividad INT)
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -1106,8 +1115,8 @@ GO
 --desasignarGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.desasignarGuia'))
     DROP PROCEDURE PnSPabm.desasignarGuia
-GO;
-CREATE PROCEDURE PnSPtrans.desasignarGuia (@guia INT, @actividad INT)
+GO
+CREATE PROCEDURE PnSPabm.desasignarGuia (@guia INT, @actividad INT)
 AS
 BEGIN
     DECLARE @errorCount INT
