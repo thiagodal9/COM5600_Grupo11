@@ -9,9 +9,7 @@ LEANDRO LEONEL VILLALBA
 MAXIMO ANDINO
 LEOPALDI PINAZZI AGUSTIN EMANUEL
 
-En este script se realiza la creacion de la base de datos, 
-del SCHEMA que contendra las tablas y 
-de las tablas de acuerdo al DER entregado.
+En este script se realiza la creacion de la base de datos y esquemas.
 */
 
 ----Creacion de BD
