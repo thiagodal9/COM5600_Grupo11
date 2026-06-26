@@ -26,6 +26,9 @@ abm PagoVenta
 ================================================================
 */
 --Alta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaPagoVenta'))
+	DROP PROCEDURE PnSPabm.altaPagoVenta
+GO
 create procedure PnSPabm.altaPagoVenta
 @importe decimal(10,2),
 @fechaHora DATETIME,
@@ -49,6 +52,9 @@ abm #ventaEntradas
 ================================================================
 */
 --Alta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaVentaEntradas'))
+	DROP PROCEDURE PnSPabm.altaVentaEntradas
+GO
 create procedure PnSPabm.altaVentaEntradas
 @Entrada INT,
 @Cantidad INT,
@@ -62,6 +68,9 @@ go
 
 -------------------------------------------------------------------------------------
 --Modificacion
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarVentaEntradas'))
+	DROP PROCEDURE PnSPabm.modificarVentaEntradas
+GO
 CREATE PROCEDURE PnSPabm.modificarVentaEntradas
 @entrada INT,
 @cantidadNEW INT,
@@ -76,10 +85,13 @@ GO
 
 -------------------------------------------------------------------------------------
 --Baja
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaAllVentaEntradas'))
+	DROP PROCEDURE PnSPabm.bajaAllVentaEntradas
+GO
 CREATE PROCEDURE PnSPabm.bajaAllVentaEntradas
 AS
 BEGIN
-	TRUNCATE TABLE PnTablas.#ventaEntradas
+	TRUNCATE TABLE #ventaEntradas
 END;
 GO
 
@@ -89,6 +101,9 @@ abm #ventaActividades
 ================================================================
 */
 --Alta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaVentaActividades'))
+	DROP PROCEDURE PnSPabm.altaVentaActividades
+GO
 create procedure PnSPabm.altaVentaActividades
 @Actividad INT,
 @FechaActividad DATE,
@@ -103,6 +118,9 @@ go
 
 -------------------------------------------------------------------------------------
 --Modificacion
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarVentaActividades'))
+	DROP PROCEDURE PnSPabm.modificarVentaActividades
+GO
 CREATE PROCEDURE PnSPabm.modificarVentaActividades
 @actividad INT,
 @fechaActividad DATE,
@@ -118,6 +136,9 @@ GO
 
 -------------------------------------------------------------------------------------
 --Baja
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaAllVentaActividades'))
+	DROP PROCEDURE PnSPabm.bajaAllVentaActividades
+GO
 CREATE PROCEDURE PnSPabm.bajaAllVentaActividades
 AS
 BEGIN

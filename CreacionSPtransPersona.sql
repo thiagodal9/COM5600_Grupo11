@@ -21,8 +21,8 @@ PRINT '--Creando SPtrans para tablas Persona...--';
 GO
 
 -------------------------------------------------------------------------------------
+--Persona
 -------------------------------------------------------------------------------------
-----Persona
 --Baja
 --Este SP solo borra si no hay dependencias.
 --De haberlas, primero se pide quitar las dependencias con los SP correspondientes.
@@ -68,7 +68,6 @@ begin
         BEGIN TRANSACTION
         BEGIN TRY
             EXECUTE PnSPabm.bajaGuia @idPersona = @IDPersona
-
             EXECUTE bajaGuardaparque @IDPersona = @IDPersona, @razon = @razon
 
             delete from PnTablas.Persona 
@@ -93,8 +92,8 @@ PRINT '--Creado SP: bajaPersona--';
 GO
 
 -------------------------------------------------------------------------------------
+--Guardaparque
 -------------------------------------------------------------------------------------
-----Guardaparque
 --asignarGuardaparque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.asignarGuardaparque'))
     DROP PROCEDURE PnSPtrans.asignarGuardaparque
@@ -121,9 +120,7 @@ BEGIN
         SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
     END
 
-    IF(@errorCount <> 0)
-        PRINT @errorLine
-    ELSE
+    IF(@errorCount = 0)
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
@@ -145,6 +142,8 @@ BEGIN
             PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
         END CATCH
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: asignarGuardaparque--';
@@ -152,10 +151,10 @@ GO
 
 -------------------------------------------------------------------------------------
 --reasignarGuardaparque
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reasignarGuardaparque'))
-    DROP PROCEDURE PnSPabm.reasignarGuardaparque
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.reasignarGuardaparque'))
+    DROP PROCEDURE PnSPtrans.reasignarGuardaparque
 GO
-CREATE PROCEDURE PnSPabm.reasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
+CREATE PROCEDURE PnSPtrans.reasignarGuardaparque (@IDPersona INT, @Parque INT, @razon varchar(40))
 AS
 BEGIN
     DECLARE @errorCount INT
@@ -179,9 +178,7 @@ BEGIN
         SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
     END
 
-    IF(@errorCount <> 0)
-        PRINT @errorLine
-    ELSE
+    IF(@errorCount = 0)
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
@@ -213,6 +210,8 @@ BEGIN
             PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
         END CATCH
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: reasignarGuardaparque--';
@@ -247,9 +246,7 @@ BEGIN
         SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
     END
 
-    IF(@errorCount <> 0)
-        PRINT @errorLine
-    ELSE
+    IF(@errorCount = 0)
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
@@ -284,6 +281,8 @@ BEGIN
             PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
         END CATCH
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: desasignarGuardaparque--';
@@ -307,14 +306,14 @@ BEGIN
     IF( NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Guardaparque inexistente.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
     END
 
     --controlReferencias
     IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona AND Estado = 'Activo') )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Guardaparque activo. Debe ser primero desasignado.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque activo. Debe ser primero desasignado.'
     END
 
     IF(@errorCount = 0)
@@ -337,15 +336,17 @@ BEGIN
             PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
         END CATCH
     END
+    ELSE
+        PRINT @errorLine
+
 END;
 GO
 PRINT '--Creado SP: bajaGuardaparque--';
 GO
 
 -------------------------------------------------------------------------------------
+--Guia
 -------------------------------------------------------------------------------------
-----Guia
-
 --asignarGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.asignarGuia'))
     DROP PROCEDURE PnSPtrans.asignarGuia
@@ -415,8 +416,6 @@ BEGIN
 
         BEGIN TRANSACTION
         BEGIN TRY
-            
-
             IF( (@actGuia IS NOT NULL) AND (@actGuia != @guia) )
                 THROW 50000, '-Actividad ya tiene un guia asignado.', 1
 

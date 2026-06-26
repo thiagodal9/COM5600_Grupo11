@@ -9,7 +9,12 @@ LEANDRO LEONEL VILLALBA
 MAXIMO ANDINO
 LEOPALDI PINAZZI AGUSTIN EMANUEL
 
-Cifrado de datos sensibles mediante TDE y cifr simetrico a nivel de columna.
+Cifrado de datos sensibles mediante cifr simetrico a nivel de columna.
+
+
+Se queria implementar cifrado mediante TDE pero SQL Server 2025 Express Edition no es compatible
+SELECT @@VERSION AS [Version_Info];
+
 
 Datos sensibles identificados:
   - Persona.DNI
@@ -18,7 +23,6 @@ Datos sensibles identificados:
   - Historial.RazonEgreso
 
 Estrategia:
-  - TDE: cifra el archivo .mdf completo en reposo (a nivel de base de datos).
   - Cifrado simetrico a nivel de columna: columnas especificas en tablas. Los SP de consulta decifran con OPEN SYMMETRIC KEY.
   - Las columnas cifradas se almacenan como varbinary.
   - Los SP abm existentes se modifican para cifrar al escribir y descifrar al leer.
@@ -35,7 +39,7 @@ go
 -- TRANSPARENT DATA ENCRYPTION (TDE)
 -- Cifra el archivo de datos en reposo a nivel de base de datos.
 -- ============================================================
-
+/*
 print '-- [1/4] Configurando Transparent Data Encryption...';
 go
 
@@ -81,7 +85,7 @@ alter database ParquesNacionales set encryption on;
 go
 print '-- TDE activado sobre ParquesNacionales.';
 go
-
+*/
 -- ===========================================================
 -- CIFRADO SIMETRICO A NIVEL DE COLUMNA
 -- Columnas: DNI, Telefono, NumeroHabilitacion, RazonEgreso
@@ -136,137 +140,95 @@ go
 -- Tabla Persona
 -- -------------
 
--- Agregar columnas cifradas si no existen
-if not exists (select 1 from sys.columns where object_id = object_id('PnTablas.Persona') and name = 'DNI_Cifrado')
-begin
-    alter table PnTablas.Persona add
-        DNI_Cifrado      varbinary(256) null,
-        Telefono_Cifrado varbinary(256) null,
-        HashDNI          varbinary(32)  null;
-    print '   -- Columnas DNI_Cifrado, Telefono_Cifrado y HashDNI agregadas a Persona.'
-end
-go
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI_Cifrado')
+BEGIN
+    ALTER TABLE PnTablas.Persona ADD 
+        DNI_Cifrado      VARBINARY(256) NULL,
+        Telefono_Cifrado VARBINARY(256) NULL,
+        HashDNI          VARBINARY(32)  NULL;
+    PRINT '   -- Columnas cifradas agregadas a Persona.';
+END
+GO
 
--- Antes de intentar hacer el UPDATE, verificamos si la columna existe
-if exists (select 1 from sys.columns where object_id = object_id('[PnTablas].[Historial]') and name = 'RazonEgreso')
-begin
-    open symmetric key SymKey_DatosSensibles
-        decryption by certificate CertColumnas_Pn;
+-- Migración de datos usando SQL Dinámico (Evita el error 207)
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI')
+BEGIN
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.Persona 
+        SET DNI_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, CONVERT(VARCHAR, DNI))),
+            Telefono_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, Telefono)),
+            HashDNI = HASHBYTES(''SHA2_256'', CONVERT(VARBINARY, CONVERT(VARCHAR, DNI)))
+        WHERE DNI IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
+    PRINT '   -- Datos de Persona migrados.';
+END
+GO
 
-    update [PnTablas].[Historial]
-    set RazonEgreso_Cifrada = encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, RazonEgreso))
-    where RazonEgreso is not null;
-
-    close symmetric key SymKey_DatosSensibles;
-    print '   -- Datos de Historial.RazonEgreso migrados a columna cifrada.';
-end
-go
-
--- Luego, el borrado también condicionado
-if exists (select 1 from sys.columns where object_id = object_id('[PnTablas].[Historial]') and name = 'RazonEgreso')
-begin
-    alter table [PnTablas].[Historial] drop column RazonEgreso;
-    print '   -- Columna Historial.RazonEgreso (sin cifrar) eliminada.'
-end
-go
-
--- Buscar y eliminar la restricción UNIQUE sobre DNI de forma precisa
+-- Eliminación de CONSTRAINT y columnas (Lógica que ya tenías)
 DECLARE @constraintName NVARCHAR(256);
 SELECT @constraintName = kc.name
 FROM sys.key_constraints kc
 JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id AND kc.unique_index_id = ic.index_id
 JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-WHERE kc.parent_object_id = OBJECT_ID('PnTablas.Persona')
-  AND c.name = 'DNI'
-  AND kc.type = 'UQ';
+WHERE kc.parent_object_id = OBJECT_ID('PnTablas.Persona') AND c.name = 'DNI' AND kc.type = 'UQ';
 
 IF @constraintName IS NOT NULL
-BEGIN
     EXEC('ALTER TABLE PnTablas.Persona DROP CONSTRAINT ' + @constraintName);
-    PRINT '   -- Constraint UNIQUE en Persona.DNI eliminado.';
-END
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI')
+    ALTER TABLE PnTablas.Persona DROP COLUMN DNI;
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'Telefono')
+    ALTER TABLE PnTablas.Persona DROP COLUMN Telefono;
 GO
-
--- Eliminar columna DNI original
-if exists (select 1 from sys.columns where object_id = object_id('PnTablas.Persona') and name = 'DNI')
-begin
-    alter table PnTablas.Persona drop column DNI;
-    print '   -- Columna Persona.DNI (sin cifrar) eliminada.'
-end
-go
-
--- Eliminar columna Telefono original
-if exists (select 1 from sys.columns where object_id = object_id('PnTablas.Persona') and name = 'Telefono')
-begin
-    alter table PnTablas.Persona drop column Telefono;
-    print '   -- Columna Persona.Telefono (sin cifrar) eliminada.'
-end
-go
 
 -- ----------
 -- Tabla Guia
 -- ----------
 
--- Agregar columnas cifradas si no existen
-if not exists (select 1 from sys.columns where object_id = object_id('PnTablas.Guia') and name = 'NumeroHabilitacion_Cifrado')
-    alter table PnTablas.Guia add NumeroHabilitacion_Cifrado varbinary(256) null;
-go
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Guia') AND name = 'NumeroHabilitacion_Cifrado')
+BEGIN
+    ALTER TABLE PnTablas.Guia ADD NumeroHabilitacion_Cifrado VARBINARY(256) NULL;
 
--- Migrar datos existentes a las columnas cifradas
-if exists (select 1 from sys.columns where object_id = object_id('PnTablas.Guia') and name = 'NumeroHabilitacion')
-begin
-    open symmetric key SymKey_DatosSensibles
-        decryption by certificate CertColumnas_Pn;
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.Guia 
+        SET NumeroHabilitacion_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, CONVERT(VARCHAR, NumeroHabilitacion)))
+        WHERE NumeroHabilitacion IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
 
-    update PnTablas.Guia
-    set NumeroHabilitacion_Cifrado =
-        encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, convert(varchar, NumeroHabilitacion)))
-    where NumeroHabilitacion is not null;
-
-    close symmetric key SymKey_DatosSensibles;
-    print '   -- Datos de Guia.NumeroHabilitacion migrados a columna cifrada.';
-end
-go
-
--- Eliminar columna original
-if exists (select 1 from sys.columns where object_id = object_id('PnTablas.Guia') and name = 'NumeroHabilitacion')
-begin
-    alter table PnTablas.Guia drop column NumeroHabilitacion;
-    print '   -- Columna Guia.NumeroHabilitacion (sin cifrar) eliminada.'
-end
-go
+    ALTER TABLE PnTablas.Guia DROP COLUMN NumeroHabilitacion;
+    PRINT '   -- Guia: Migración completada.';
+END
+GO
 
 -- ---------------
 -- Tabla Historial
 -- ---------------
 
--- Agregar columnas cifradas si no existen
-if not exists (select 1 from sys.columns where object_id = object_id('PnTablas.Historial') and name = 'RazonEgreso_Cifrada')
-    alter table PnTablas.Historial add RazonEgreso_Cifrada varbinary(512) null;
-go
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Historial') AND name = 'RazonEgreso_Cifrada')
+    ALTER TABLE PnTablas.Historial ADD RazonEgreso_Cifrada VARBINARY(512) NULL;
+GO
 
--- Migrar datos existentes a las columnas cifradas
-if exists (select 1 from sys.columns where object_id = object_id('[PnTablas].[Historial]') and name = 'RazonEgreso')
-begin
-    open symmetric key SymKey_DatosSensibles
-        decryption by certificate CertColumnas_Pn;
-
-    update [PnTablas].[Historial]
-    set RazonEgreso_Cifrada = encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, RazonEgreso))
-    where RazonEgreso is not null;
-
-    close symmetric key SymKey_DatosSensibles;
-    print '   -- Datos de Historial.RazonEgreso migrados a columna cifrada.';
-end
-go
-
--- Eliminar columna original
-if exists (select 1 from sys.columns where object_id = object_id('PnTablas.Historial') and name = 'RazonEgreso')
-begin
-    alter table [PnTablas].[Historial] drop column RazonEgreso;
-    print '   -- Columna Historial.RazonEgreso (sin cifrar) eliminada.'
-end
-go
+-- Migración usando SQL Dinámico
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Historial') AND name = 'RazonEgreso')
+BEGIN
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.Historial 
+        SET RazonEgreso_Cifrada = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, RazonEgreso))
+        WHERE RazonEgreso IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
+    PRINT '   -- Datos de Historial migrados.';
+    
+    ALTER TABLE PnTablas.Historial DROP COLUMN RazonEgreso;
+    PRINT '   -- Columna Historial.RazonEgreso eliminada.';
+END
+GO
 
 -- ==========================================================
 -- SP PARA OPERAR DATOS CIFRADOS
@@ -290,6 +252,7 @@ create procedure PnSPabm.altaPersona
 with execute as owner
 as
 begin
+    SET NOCOUNT ON;
     declare @errorCount int = 0;
     declare @errorLine  varchar(200) = 'Error/es:';
 
@@ -328,24 +291,33 @@ begin
         set @errorLine  += char(13) + '- Persona con ese DNI ya presente.';
     end
 
-    if @errorCount = 0
-    begin
-        open symmetric key SymKey_DatosSensibles
-            decryption by certificate CertColumnas_Pn;
+    IF @errorCount = 0
+    BEGIN
+        BEGIN TRY
+            OPEN SYMMETRIC KEY SymKey_DatosSensibles
+                DECRYPTION BY CERTIFICATE CertColumnas_Pn;
 
-        insert into PnTablas.Persona (NombrePersona, Apellido, Rol, DNI_Cifrado, Telefono_Cifrado, HashDNI)
-        values (
-            @nombre,
-            @apellido,
-            @rol,
-            encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, convert(varchar, @dni))),
-            encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, @telefono)),
-            hashbytes('SHA2_256', convert(varbinary, convert(varchar, @dni)))
-        );
-        close symmetric key SymKey_DatosSensibles;
-    end
-    else
-        print @errorLine;
+            INSERT INTO PnTablas.Persona (NombrePersona, Apellido, Rol, DNI_Cifrado, Telefono_Cifrado, HashDNI)
+            VALUES (
+                @nombre,
+                @apellido,
+                @rol,
+                ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(VARBINARY, CONVERT(VARCHAR, @dni))),
+                ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(VARBINARY, @telefono)),
+                HASHBYTES('SHA2_256', CONVERT(VARBINARY, CONVERT(VARCHAR, @dni)))
+            );
+            CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+        END TRY
+        BEGIN CATCH
+            IF SYMKEYPROPERTY(KEY_ID('SymKey_DatosSensibles'), 'IsOpen') = 1
+                CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+            
+            PRINT 'Error grave al intentar cifrar los datos. Verifique la configuración del certificado.';
+            THROW; 
+        END CATCH
+    END
+    ELSE
+        PRINT @errorLine;
 end;
 go
 print '   -- SP altaPersona actualizado con cifrado.';

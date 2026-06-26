@@ -53,11 +53,12 @@ BEGIN
 		Parque INT NULL,
 		Estado varchar(10),
 		FechaInicio DATE,
+
+		PRIMARY KEY(IDGuardaParque),
 		FOREIGN KEY(IDGuardaParque) REFERENCES PnTablas.Persona(IDPersona),
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
-		PRIMARY KEY(IDGuardaParque)
+		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
 	)
-	PRINT '--Creada Tabla: Guardaparque--'
+	PRINT '--Creada Tabla: Guardaparque--';
 END;
 GO
 
@@ -70,8 +71,9 @@ BEGIN
 		Titulo varchar(100),
 		VencimientoHabilitacion DATE,
 		NumeroHabilitacion INT,
-		FOREIGN KEY(IDGuia) REFERENCES PnTablas.Persona(IDPersona),
-		PRIMARY KEY (IDGuia)
+
+		PRIMARY KEY (IDGuia),
+		FOREIGN KEY(IDGuia) REFERENCES PnTablas.Persona(IDPersona)
 	)
 	PRINT '--Creada Tabla: Guia--'
 END;
@@ -102,7 +104,10 @@ BEGIN
 		Parque INT NOT NULL,
 		FechaInicio DATE,
 		FechaEgreso DATE,
-		RazonEgreso varchar(40)
+		RazonEgreso varchar(40),
+		
+		FOREIGN KEY(Guardaparque) REFERENCES PnTablas.GuardaParque(IDGuardaParque),
+		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
 	)
 	PRINT '--Creada Tabla: Historial--';
 END;
@@ -118,10 +123,11 @@ BEGIN
 	(
 		Guia INT,
 		Especialidad INT,
+
+		PRIMARY KEY(Guia, Especialidad),
 		FOREIGN KEY(Guia) REFERENCES PnTablas.Guia(IDGuia),
-		FOREIGN KEY(Especialidad) REFERENCES PnTablas.Especialidad(IDEspecialidad),
-		PRIMARY KEY(Guia, Especialidad)
+		FOREIGN KEY(Especialidad) REFERENCES PnTablas.Especialidad(IDEspecialidad)
 	)
-	PRINT '--Creada Tabla: TieneEspecialidad--'
+	PRINT '--Creada Tabla: TieneEspecialidad--';
 END;
 GO

@@ -18,6 +18,8 @@ ORDEN OBLIGATORIO (por dependencias de FK):
 2) CreacionTablasParque.sql    -> no depende de otras tablas del proyecto
 3) CreacionTablasPersona.sql   -> Guardaparque depende de Parque
 4) CreacionTablasActividad.sql -> Actividad depende de Parque y de Guia (definida en Persona)
+4) CreacionTablasConcesion.sql
+4) CreacionTablasVenta.sql
 
 USO: requiere Modo SQLCMD activado en SSMS (menu Consulta > Modo SQLCMD).
 Los 4 archivos deben estar guardados en la misma carpeta que este script.
@@ -30,6 +32,8 @@ para que esto funcione se deberia crear un .bat que le diga a SQL Server donde e
 :r CreacionTablasParque.sql
 :r CreacionTablasPersona.sql
 :r CreacionTablasActividad.sql
+:r CreacionTablasConcesion.sql
+:r CreacionTablasVenta.sql
 
 PRINT '--Base de datos creada completamente--';
 GO

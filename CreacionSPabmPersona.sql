@@ -20,9 +20,11 @@ GO
 PRINT '--Creando SPabm para tablas Persona...--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Persona
+/*
+================================================================
+abm Persona
+================================================================
+*/
 --altaPersona
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaPersona'))
     DROP PROCEDURE PnSPabm.altaPersona
@@ -48,7 +50,7 @@ begin
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    IF ( (@rol NOT LIKE 'Guardaparque') OR (@rol NOT LIKE 'Guia') )
+    IF ( (@rol NOT IN ('Guardaparque', 'Guia')) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -93,13 +95,13 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
-    if ( (@rolNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
+    if ( (@dniNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    if ( (@rolNuevo IS NOT NULL) AND ( (@rolNuevo NOT LIKE 'Guardaparque') OR (@rolNuevo NOT LIKE 'Guia') ) )
+    if ( (@rolNuevo IS NOT NULL) AND (@rolNuevo NOT IN ('Guardaparque', 'Guia')) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -150,9 +152,11 @@ go
 PRINT '--Creado SP: modificacionPersona--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
---Guardaparque
+/*
+================================================================
+abm Guardaparque
+================================================================
+*/
 --altaGuardaParque
 --Solo registra al guardaparques, no asigna. Ingresa como inactivo.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaGuardaParque'))
@@ -260,9 +264,12 @@ GO
 PRINT '--Creado SP: bajaHistorial--';
 GO
 */
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Guia
+
+/*
+================================================================
+abm Guia
+================================================================
+*/
 --altaGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaGuia'))
     DROP PROCEDURE PnSPabm.altaGuia
@@ -336,19 +343,21 @@ create procedure PnSPabm.bajaGuia
 as
 begin
     DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
 
     SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
 
     if not exists (select 1 from PnTablas.Guia where IDGuia = @idPersona)
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'El idPersona no es de ningun guia registrado.'
+        SET @errorLine = @errorLine + CHAR(13) + 'El idPersona no es de ningun guia registrado.'
     END
 
     if ( (@errorCount = 0) AND exists (select 1 from PnTablas.Actividad where Guia = @idPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'El guia tiene actividades asignadas. Desasigne al guia antes de proceder.'
+        SET @errorLine = @errorLine + CHAR(13) + 'El guia tiene actividades asignadas. Desasigne al guia antes de proceder.'
     END
     
     IF(@errorCount = 0)
@@ -358,6 +367,8 @@ begin
         delete from PnTablas.Guia
         where IDGuia = @idPersona;
     END
+    ELSE
+        PRINT @errorLine
 end
 go
 PRINT '--Creado SP: bajaGuia--';
@@ -410,14 +421,18 @@ begin
         numeroHabilitacion = isnull(@numeroHabilitacionNuevo, numeroHabilitacion)
         where IDGuia = @idPersona;
     END
+    ELSE
+        PRINT @errorLine
 end;
 go
 PRINT '--Creado SP: modificacionGuia--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Especialidad
+/*
+================================================================
+abm Especialidad
+================================================================
+*/
 --altaEspecialidad
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaEspecialidad'))
     DROP PROCEDURE PnSPabm.altaEspecialidad
@@ -427,23 +442,27 @@ create procedure PnSPabm.altaEspecialidad
 as
 begin
     DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
 
     SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
 
     IF(@descripcion IS NULL)
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Descripcion invalida.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Descripcion invalida.'
     END
 
     if( (@errorCount = 0) AND exists(select 1 from PnTablas.Especialidad where DescripcionEspecialidad = @descripcion) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Ya existe una especialidad con esa descripcion.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Ya existe una especialidad con esa descripcion.'
     END
 
     IF(@errorCount = 0)
         insert into PnTablas.Especialidad(DescripcionEspecialidad) values (@descripcion)
+    ELSE
+        PRINT @errorLine
 end
 go
 PRINT '--Creado SP: altaEspecialidad--';
@@ -524,25 +543,27 @@ begin
     IF( (@idEspecialidad IS NULL) OR (@idEspecialidad <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Especialidad invalida.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Especialidad invalida.'
     END
 
     --controlExistencia
     if( (@errorCount = 0) AND not exists (select 1 from PnTablas.Especialidad where idEspecialidad = @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: La especialidad a modificar no existe.'
+        SET @errorLine = @errorLine + CHAR(13) + '- La especialidad a modificar no existe.'
     END
 
     --controlReferencia
     if( (@errorCount = 0) AND exists(select 1 from PnTablas.TieneEspecialidad where Guia = @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        PRINT 'ERROR: Hay guias con esa especialidad. Desvinculelos antes de continuar.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Hay guias con esa especialidad. Desvinculelos antes de continuar.'
     END
 
     IF(@errorCount = 0)
         delete from PnTablas.Especialidad where idEspecialidad = @idEspecialidad
+    ELSE
+        PRINT @errorLine
 end;
 go
 PRINT '--Creado SP: bajaEspecialidad--';
@@ -603,6 +624,8 @@ BEGIN
         INSERT INTO PnTablas.tieneEspecialidad(Guia, Especialidad)
         VALUES(@guia, @especialidad)
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: asignarEspecialidad--';
@@ -647,6 +670,8 @@ BEGIN
         DELETE FROM PnTablas.tieneEspecialidad
         WHERE Guia = @guia AND Especialidad = @especialidad
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: desasignarEspecialidad--';
@@ -685,6 +710,8 @@ BEGIN
         DELETE FROM PnTablas.tieneEspecialidad
         WHERE Guia = @guia
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: desasignarEspecialidades--';
@@ -743,6 +770,8 @@ BEGIN
         SET Especialidad = @especialidadNEW
         WHERE Guia = @guia AND Especialidad = @especialidadOLD
     END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: reasignarEspecialidad--';

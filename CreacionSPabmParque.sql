@@ -20,9 +20,11 @@ GO
 PRINT '--Creando SPabm para tablas Parque...--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----TipoParque
+/*
+================================================================
+abm TipoParque
+================================================================
+*/
 --altaTipoParque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTipoParque'))
 	DROP PROCEDURE PnSPabm.altaTipoParque
@@ -31,23 +33,27 @@ CREATE PROCEDURE PnSPabm.altaTipoParque (@tipo varchar(30))
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF(@tipo IS NULL)
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo invalido.'
 	END
 
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.TipoParque WHERE DescripcionParque LIKE @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo ya existente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo ya existente.'
 	END
 
 	IF(@errorCount = 0)
 		INSERT INTO PnTablas.TipoParque (DescripcionParque) VALUES (@tipo)
+	ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: altaTipoParque--';
@@ -62,32 +68,36 @@ CREATE PROCEDURE PnSPabm.bajaTipoParque (@tipo INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF( (@tipo IS NULL) OR (@tipo <= 0) )
 	BEGIN
-		PRINT 'ERROR: Tipo invalido'
 		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo invalido'
 	END
 
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoParque WHERE IDTipoParque = @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: No existe este tipo.'
+		SET @errorLine = @errorLine + CHAR(13) + '- No existe este tipo.'
 	END
 
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Parque WHERE Tipo = @tipo) )
 	BEGIN
-		PRINT 'ERROR: Existe al menos un parque de este tipo. Eliminelo para continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos un parque de este tipo. Eliminelo para continuar.'
 		SET @errorCount = @errorCount + 1
 	END
 
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.TipoParque
-		WHERE IDTipoParque LIKE @tipo
+		WHERE IDTipoParque = @tipo
 	END
+	ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaTipoParque--';
@@ -141,9 +151,11 @@ GO
 PRINT '--Creados SP para tabla TipoParque--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Provincia
+/*
+================================================================
+abm Provincia
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaProvincia'))
     DROP PROCEDURE PnSPabm.altaProvincia
@@ -152,23 +164,27 @@ CREATE PROCEDURE PnSPabm.altaProvincia (@nombre varchar(15))
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF(@nombre IS NULL)
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Nombre invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Nombre invalido.'
 	END
 
 	IF( (@errorCount = 0) AND EXISTS (SELECT 1 FROM PnTablas.Provincia WHERE NombreProv LIKE @nombre) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Provincia ya existente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Provincia ya existente.'
 	END
 
 	IF(@errorCount = 0)
 		INSERT INTO PnTablas.Provincia (NombreProv) VALUES (@nombre)
+	ELSE
+		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: altaProvincia--';
@@ -183,27 +199,29 @@ CREATE PROCEDURE PnSPabm.bajaProvincia (@provincia INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF( (@provincia IS NULL) OR (@provincia <= 0) )
 	BEGIN
-		PRINT 'ERROR: Provincia invalida.'
 		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Provincia invalida.'
 	END
 
 	--controlExistencia
 	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Provincia WHERE IDProv = @provincia) )
 	BEGIN
-		PRINT 'ERROR: Provincia inexistente.'
 		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Provincia inexistente.'
 	END
 
 	--controlReferencia
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Parque WHERE Ubicacion = @provincia) ) 
 	BEGIN
-		PRINT 'ERROR: Existe al menos un parque en esta provincia. Eliminelo para continuar.'
 		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos un parque en esta provincia. Eliminelo para continuar.'
 	END
 
 	IF(@errorCount = 0)
@@ -211,6 +229,8 @@ BEGIN
 		DELETE FROM PnTablas.Provincia
 		WHERE IDProv = @provincia
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaProvincia--';
@@ -273,9 +293,11 @@ GO
 PRINT '--Creados SP para tabla Provincia--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Parque
+/*
+================================================================
+abm Parque
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaParque'))
     DROP PROCEDURE PnSPabm.altaParque
@@ -435,7 +457,7 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.Parque
 		SET Superficie = @SuperficieNEW
-		WHERE IDParque LIKE @parque
+		WHERE IDParque = @parque
 	END
 	ELSE
 		PRINT @errorLine
@@ -505,7 +527,7 @@ BEGIN
 			SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una actividad asociada a este parque. Eliminela para continuar.'
 		END
 
-		IF EXISTS(SELECT 1 FROM PnTablas.Concesion WHERE IDParque = @parque)
+		IF EXISTS(SELECT 1 FROM PnTablas.Concesion WHERE Parque = @parque)
 		BEGIN
 			SET @errorCount = @errorCount + 1
 			SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una concesion asociada a este parque. Dela de baja para continuar.'
@@ -515,7 +537,7 @@ BEGIN
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.Parque
-		WHERE IDParque LIKE @parque
+		WHERE IDParque = @parque
 		END
 	ELSE
 		PRINT @errorLine
@@ -527,9 +549,11 @@ GO
 PRINT '--Creados SP para tabla Parque--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Dia
+/*
+================================================================
+abm Dia
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaDias'))
     DROP PROCEDURE PnSPabm.altaDias
@@ -608,9 +632,11 @@ GO
 PRINT '--Creados SP para tabla HorarioParque--';
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----TelefonoParque
+/*
+================================================================
+abm TelefonoParque
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTelefonoParque'))
     DROP PROCEDURE PnSPabm.altaTelefonoParque
@@ -669,19 +695,21 @@ CREATE PROCEDURE PnSPabm.bajaTelefonoParque (@numero varchar(12))
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF(@numero IS NULL)
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Numero invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Numero invalido.'
 	END
 
 	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TelefonoParque WHERE NumeroParque = @numero) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: No existe ese numero.'
+		SET @errorLine = @errorLine + CHAR(13) + '- No existe ese numero.'
 	END
 
 	IF(@errorCount = 0)
@@ -689,6 +717,8 @@ BEGIN
 		DELETE FROM PnTablas.TelefonoParque
 		WHERE NumeroParque = @numero
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaTelefonoParque--';

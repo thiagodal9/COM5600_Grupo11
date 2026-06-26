@@ -26,24 +26,29 @@ abm TipoEntrada
 ================================================================
 */
 --Alta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTipoEntrada'))
+	DROP PROCEDURE PnSPabm.altaTipoEntrada
+GO
 create procedure PnSPabm.altaTipoEntrada
 @DescripcionTipoEntrada char(20)
 as 
 begin
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF(@DescripcionTipoEntrada IS NULL)
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Descripcion invalida.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Descripcion invalida.'
 	END
 	
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE DescripcionTipoEntrada LIKE @DescripcionTipoEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Descripcion ya presente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Descripcion ya presente.'
 	END
 
 	IF(@errorCount = 0)
@@ -51,35 +56,42 @@ begin
 		insert into PnTablas.TipoEntrada(DescripcionTipoEntrada) 
 		values (@DescripcionTipoEntrada);
 	END
+	ELSE
+		PRINT @errorLine
 end
 go
 
 -------------------------------------------------------------------------------------
 --Baja
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTipoEntrada'))
+	DROP PROCEDURE PnSPabm.bajaTipoEntrada
+GO
 create procedure PnSPabm.bajaTipoEntrada
 @idTipoEntrada int
 as
 begin
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	IF( (@idTipoEntrada IS NULL) OR (@idTipoEntrada <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Descripcion invalida.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Descripcion invalida.'
 	END
 
 	if( (@errorCount = 0) AND not exists (select 1 from PnTablas.TipoEntrada where idTipoEntrada = @idTipoEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo no existente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo no existente.'
 	END
 
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Entrada WHERE TipoEntrada = @idTipoEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Este tipo tiene al menos una entrada relacionada. Eliminela para continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Este tipo tiene al menos una entrada relacionada. Eliminela para continuar.'
 	END
 
 	IF(@errorCount = 0)
@@ -87,14 +99,19 @@ begin
 		delete from PnTablas.TipoEntrada
 		where idTipoEntrada = @idTipoEntrada;
 	END
+	ELSE
+		PRINT @errorLine
 end
 go
 
 -------------------------------------------------------------------------------------
 --Modificacion
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionTipoEntrada'))
+	DROP PROCEDURE PnSPabm.modificacionTipoEntrada
+GO
 create procedure PnSPabm.modificacionTipoEntrada
 @idTipoEntrada int,
-@descripcionNueva varchar
+@descripcionNueva varchar(30) --vease el tam en la tabla
 as
 begin
 	DECLARE @errorCount INT
@@ -133,7 +150,7 @@ begin
 	IF(@errorCount = 0)
 	BEGIN
 		update PnTablas.TipoEntrada
-		set descripcion = @descripcionNueva
+		set DescripcionTipoEntrada = @descripcionNueva
 		where idTipoEntrada = @idTipoEntrada
 	END
 	ELSE
@@ -147,6 +164,9 @@ abm Entrada
 ================================================================
 */
 --Alta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaEntrada'))
+	DROP PROCEDURE PnSPabm.altaEntrada
+GO
 create procedure PnSPabm.altaEntrada
 @idTipoEntrada int,
 @precio decimal(10,2),
@@ -203,38 +223,45 @@ begin
 
 	IF(@errorCount = 0)
 	BEGIN
-		insert into PnTablas.Entrada(idTipoEntrada, precio, parque) 
+		insert into PnTablas.Entrada(TipoEntrada, precio, parque) 
 		values(@idTipoEntrada, @precio, @parque);
 	END
+	ELSE
+		PRINT @errorLine
 end
 go
 
 -------------------------------------------------------------------------------------
 --Baja
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaEntrada'))
+	DROP PROCEDURE PnSPabm.bajaEntrada
+GO
 create procedure PnSPabm.bajaEntrada
 @idEntrada int
 as
 begin
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
-	IF( (@errorCount IS NULL) OR (@errorCount <= 0) )
+	IF((@idEntrada IS NULL) OR (@idEntrada <= 0))
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Entrada invalida.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Entrada invalida.'
 	END
 
 	if( (@errorCount = 0) AND not exists (select 1 from PnTablas.Entrada where idEntrada = @idEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Entrada inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
 
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.PagoPoseeEntrada WHERE idEntrada = @idEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Existe al menos una relacion entre esta entrada y ventas hechas. Elimine dicha relacion para continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una relacion entre esta entrada y ventas hechas. Elimine dicha relacion para continuar.'
 	END
 
 	IF(@errorCount = 0)
@@ -242,11 +269,16 @@ begin
 		delete from PnTablas.Entrada
 		where idEntrada = @idEntrada;
 	END
+	ELSE
+		PRINT @errorLine
 end
 go
 
 -------------------------------------------------------------------------------------
 --Modificacion
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionPrecioEntrada'))
+	DROP PROCEDURE PnSPabm.modificacionPrecioEntrada
+GO
 create procedure PnSPabm.modificacionPrecioEntrada
 @idEntrada int,
 @precioNuevo decimal(10,2)
@@ -284,5 +316,7 @@ begin
 		SET Precio = @precioNuevo
 		WHERE IDEntrada = @idEntrada
 	END
+	ELSE
+		PRINT @errorLine
 end
 go
