@@ -345,16 +345,17 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 ----Guia
-/*
+
 --asignarGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.asignarGuia'))
     DROP PROCEDURE PnSPtrans.asignarGuia
 GO
-CREATE PROCEDURE PnSPtrans.asignarGuia (@guia INT, @actividad INT)
+CREATE PROCEDURE PnSPtrans.asignarGuia (@guia INT, @actividad INT, @fecha DATE, @hora TIME)
 AS
 BEGIN
     DECLARE @errorCount INT
     DECLARE @errorLine varchar(100)
+    DECLARE @actGuia INT
 
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
@@ -366,10 +367,23 @@ BEGIN
         SET @errorLine = @errorLine + CHAR(13) + '- ID de guia invalido.'
     END
 
-    IF((@actividad IS NULL) OR (@actividad <= 0))
+    IF( (@actividad IS NULL) OR (@actividad <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- ID de actividad invalido.'
+    END
+
+    IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
+    END
+
+    IF( (@hora IS NULL) OR 
+    ((@fecha = CONVERT(DATE, GETDATE())) AND (@hora < CONVERT(TIME, GETDATE()))) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Hora invalida.'
     END
 
     --controlExistencia
@@ -386,21 +400,32 @@ BEGIN
             SET @errorCount = @errorCount + 1
             SET @errorLine = @errorLine + CHAR(13) + '- Guia inexistente.'
         END
+
+        IF( (@errorCount = 0) AND 
+        NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- No existe ese turno para la actividad.'
+        END
     END
 
     IF(@errorCount = 0)
     BEGIN
+        SET @actGuia = (SELECT Guia FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
+
         BEGIN TRANSACTION
         BEGIN TRY
-            IF( EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad AND Guia IS NOT NULL) )
+            
+
+            IF( (@actGuia IS NOT NULL) AND (@actGuia != @guia) )
                 THROW 50000, '-Actividad ya tiene un guia asignado.', 1
 
-            IF( EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad AND Guia = @guia) )
-                THROW 50000, '-Actividad ya tiene asignado este guia.', 1
+            IF( (@actGuia IS NOT NULL) AND (@actGuia = @guia) )
+                THROW 50001, '-Actividad ya tiene asignado este guia.', 1
 
-            UPDATE PnTablas.Actividad
+            UPDATE PnTablas.HorarioActividad
             SET Guia = @guia
-            WHERE IDActividad = @actividad
+            WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora
 
             COMMIT TRANSACTION
         END TRY
@@ -424,11 +449,12 @@ GO
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.desasignarGuia'))
     DROP PROCEDURE PnSPtrans.desasignarGuia
 GO
-CREATE PROCEDURE PnSPtrans.desasignarGuia (@guia INT, @actividad INT)
+CREATE PROCEDURE PnSPtrans.desasignarGuia (@guia INT, @actividad INT, @fecha DATE, @hora TIME)
 AS
 BEGIN
     DECLARE @errorCount INT
     DECLARE @errorLine varchar(100)
+    DECLARE @actGuia INT
 
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
@@ -446,23 +472,54 @@ BEGIN
         SET @errorLine = @errorLine + CHAR(13) + '- ID de actividad invalido.'
     END
 
-    --controlExistencia
-    IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad AND Guia = @guia) )
+    IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- No existe tal asociacion.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
+    END
+
+    IF( (@hora IS NULL) OR 
+    ((@fecha = CONVERT(DATE, GETDATE())) AND (@hora < CONVERT(TIME, GETDATE()))) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Hora invalida.'
+    END
+
+    --controlExistencia
+    IF(@errorCount = 0)
+    BEGIN
+        IF( NOT EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- Actividad inexistente.'
+        END
+
+        IF( NOT EXISTS(SELECT 1 FROM PnTablas.Guia WHERE IDGuia = @guia) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- Guia inexistente.'
+        END
+
+        IF( (@errorCount = 0) AND 
+        NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- No existe ese turno para la actividad.'
+        END
     END
 
     IF(@errorCount = 0)
     BEGIN
+        SET @actGuia = (SELECT Guia FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora) 
+
         BEGIN TRANSACTION
         BEGIN TRY
-            IF( EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad AND Guia IS NULL) )
-                THROW 50000, '-Actividad no tiene a nadie por desasignar.', 1
+            IF(@actGuia IS NULL)
+                THROW 50000, '-El turno no tiene a guia para desasignar.', 1
 
-            UPDATE PnTablas.Actividad
+            UPDATE PnTablas.HorarioActividad
             SET Guia = NULL
-            WHERE IDActividad = @actividad
+            WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora
 
             COMMIT TRANSACTION
         END TRY
@@ -481,4 +538,3 @@ END;
 GO
 PRINT '--Creado SP: desasignarGuia--';
 GO
-*/
