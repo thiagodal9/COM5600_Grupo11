@@ -69,7 +69,7 @@ begin
         BEGIN TRY
             EXECUTE PnSPabm.bajaGuia @idPersona = @IDPersona
 
-            EXECUTE bajaGuardaparque @IDPersona = @IDPersona, @razon = @razon
+            EXECUTE PnSPabm.bajaGuardaparque @IDPersona = @IDPersona, @razon = @razon
 
             delete from PnTablas.Persona 
             where idPersona = @idPersona
@@ -131,7 +131,7 @@ BEGIN
                 THROW 50000, '-Guardaparque ya activo en un parque.', 1
         
             UPDATE PnTablas.Guardaparque
-            SET Estado = 'Activo', Parque = @Parque, FechaInicio = GETDATE()
+            SET Estado = 'Activo', Parque = @Parque, FechaInicio = CONVERT(DATE, GETDATE())
             WHERE IDGuardaparque = @IDPersona
 
             COMMIT TRANSACTION;
@@ -189,7 +189,7 @@ BEGIN
                 THROW 50000, '-Guardaparque ya activo en este parque.', 1
         
             SET @fechaIni = (SELECT FechaInicio FROM PnTablas.GuardaParque WHERE IDGuardaParque = @IDPersona)
-            SET @fechaFin = GETDATE()
+            SET @fechaFin = CONVERT(DATE, GETDATE())
 
             EXECUTE PnSPabm.altaHistorial 
             @Guardaparque = @IDPersona, 
@@ -199,7 +199,7 @@ BEGIN
             @razon = @razon
 
             UPDATE PnTablas.Guardaparque
-            SET Parque = @Parque, FechaInicio = GETDATE()
+            SET Parque = @Parque, FechaInicio = CONVERT(DATE, GETDATE())
             WHERE IDGuardaparque = @IDPersona
 
             COMMIT TRANSACTION;
@@ -230,21 +230,51 @@ BEGIN
     DECLARE @errorLine varchar(100)
     DECLARE @fechaIni DATE
     DECLARE @fechaFin DATE
+    DECLARE @estado varchar(10)
 
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
 
-    --controlExistencia
-    IF( NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @Parque) )
+    --controlValidez
+    IF( (@IDPersona IS NULL) OR (@IDPersona <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- Parque inexistente.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque invalido.'
     END
 
-    IF( NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
+    IF( (@Parque IS NULL) OR (@Parque <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Parque invalido.'
+    END
+
+    IF(@razon IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Razon invalida.'
+    END
+
+    --controlExistencia
+    IF(@errorCount = 0)
+    BEGIN
+        IF( NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @Parque) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- Parque inexistente.'
+        END
+
+        IF( NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+            SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
+        END
+    END
+
+    --controlRelacion
+    IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona AND Parque = @Parque) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- No existe tal relacion.'
     END
 
     IF(@errorCount <> 0)
@@ -253,14 +283,11 @@ BEGIN
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
-            IF( EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona AND Estado = 'Activo') )
-                THROW 50001, '-Guardaparque no activo.', 1
-
-            IF( EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona AND Parque = @Parque) )
-                THROW 50002, '-Guardaparque no asignado a ese parque.', 1
+            IF( EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona AND Estado = 'Inactivo') )
+                THROW 50000, '-Guardaparque no activo.', 1
         
             SET @fechaIni = (SELECT FechaInicio FROM PnTablas.GuardaParque WHERE IDGuardaParque = @IDPersona)
-            SET @fechaFin = GETDATE()
+            SET @fechaFin = CONVERT(DATE, GETDATE())
 
             EXECUTE PnSPabm.altaHistorial 
             @Guardaparque = @IDPersona, 
@@ -411,11 +438,9 @@ BEGIN
 
     IF(@errorCount = 0)
     BEGIN
-        SET @actGuia = (SELECT Guia FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
-
         BEGIN TRANSACTION
         BEGIN TRY
-            
+            SET @actGuia = (SELECT Guia FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
 
             IF( (@actGuia IS NOT NULL) AND (@actGuia != @guia) )
                 THROW 50000, '-Actividad ya tiene un guia asignado.', 1
@@ -454,7 +479,6 @@ AS
 BEGIN
     DECLARE @errorCount INT
     DECLARE @errorLine varchar(100)
-    DECLARE @actGuia INT
 
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
@@ -510,11 +534,9 @@ BEGIN
 
     IF(@errorCount = 0)
     BEGIN
-        SET @actGuia = (SELECT Guia FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora) 
-
         BEGIN TRANSACTION
         BEGIN TRY
-            IF(@actGuia IS NULL)
+            IF EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora AND Guia IS NULL)
                 THROW 50000, '-El turno no tiene a guia para desasignar.', 1
 
             UPDATE PnTablas.HorarioActividad
