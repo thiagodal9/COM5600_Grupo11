@@ -207,8 +207,8 @@ GO
 
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
-/*
 ----Historial
+--No hacen falta validaciones porque los datos los provee una SP superior
 --altaHistorial
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaHistorial'))
     DROP PROCEDURE PnSPabm.altaHistorial
@@ -263,13 +263,10 @@ END;
 GO
 PRINT '--Creado SP: bajaHistorial--';
 GO
-*/
 
-/*
-================================================================
-abm Guia
-================================================================
-*/
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+----Guia
 --altaGuia
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaGuia'))
     DROP PROCEDURE PnSPabm.altaGuia
