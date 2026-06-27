@@ -234,3 +234,4 @@ GO
 SELECT *
 FROM PnTablas.ActividadParque;
 GO
+*/

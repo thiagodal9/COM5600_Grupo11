@@ -14,6 +14,17 @@ LEOPALDI PINAZZI AGUSTIN EMANUEL
 ----Tablas Principales: Concesion, Empresa, HistorialPagos
 */
 
+IF EXISTS (SELECT name FROM sys.databases WHERE name = 'ParquesNacionales')
+BEGIN
+	USE ParquesNacionales
+	PRINT '--Usando BD: ParquesNacionales--' 
+END;
+GO
+
+PRINT '--CreacionTablasConcesion--' + CHAR(13) + '--Creando tablas principales...';
+GO
+
+
 --Tabla Empresa
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Empresa')
 BEGIN
@@ -39,6 +50,7 @@ BEGIN
 		FechaInicioConcesion DATE,
 		FechaFinConcesion DATE,
 		CostoAlquiler DECIMAL(10,2),
+
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY(Empresa) REFERENCES PnTablas.Empresa(IDEmpresa)
 	)
@@ -55,7 +67,8 @@ BEGIN
 		Concesion INT,
 		Importe DECIMAL(10,2),
 		Vencimiento DATE,
-		Estado varchar(7),
+		Estado varchar(10),
+
 		FOREIGN KEY(Concesion) references PnTablas.Concesion(IDConcesion)
 	)
 	PRINT '--Creada Tabla: HistorialPago--'

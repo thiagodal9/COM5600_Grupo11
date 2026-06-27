@@ -51,8 +51,10 @@ BEGIN
 		Parque INT,
 		Tipo INT,
 		Guia INT NULL,
+
 		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
-		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct)
+		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct),
+		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia)
 	);
 	PRINT '--Creada Tabla: Actividad--'
 END;
@@ -63,13 +65,14 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnT
 BEGIN
 	CREATE TABLE PnTablas.HorarioActividad
 	(
-		Actividad INT,
+		IDActividad INT,
 		FechaActividad DATE,
 		HoraInicio TIME,
 		Guia INT NULL,
-		FOREIGN KEY(Actividad) REFERENCES PnTablas.Actividad(IDActividad),
-		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia),
-		PRIMARY KEY(Actividad, FechaActividad, HoraInicio)
+
+		PRIMARY KEY(IDActividad, FechaActividad, HoraInicio),
+		FOREIGN KEY(IDActividad) REFERENCES PnTablas.Actividad(IDActividad),
+		FOREIGN KEY (Guia) REFERENCES PnTablas.Guia(IDGuia)
 	)
 	PRINT '--Creada Tabla: HorarioActividad--'
 END;

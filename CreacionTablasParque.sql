@@ -60,6 +60,7 @@ BEGIN
 		Ubicacion INT,
 		Superficie INT,
 		Tipo INT,
+
 		FOREIGN KEY(Ubicacion) REFERENCES PnTablas.Provincia(IDProv),
 		FOREIGN KEY(Tipo) REFERENCES PnTablas.TipoParque(IDTipoParque)
 	)
@@ -104,11 +105,13 @@ BEGIN
 		Parque INT,
 		Dia INT,
 		Horario INT,
+
+		PRIMARY KEY(Parque, Dia, Horario),
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY(Dia) REFERENCES PnTablas.Dia(IDDia),
 		FOREIGN KEY(Horario) REFERENCES PnTablas.HorarioParque(IDHorarioP)
 	)
-	PRINT '--Creada Tabla: Abre--'
+	PRINT '--Creada Tabla: Abre--';
 END;
 GO
 
@@ -119,9 +122,10 @@ BEGIN
 	(
 		NumeroParque varchar(12),
 		Parque INT,
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
-		PRIMARY KEY(NumeroParque, Parque)
+
+		PRIMARY KEY(NumeroParque, Parque),
+		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
 	);
-	PRINT '--Creada Tabla: TelefonoParque--'
+	PRINT '--Creada Tabla: TelefonoParque--';
 END;
 GO

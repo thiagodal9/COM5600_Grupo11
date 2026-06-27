@@ -54,10 +54,7 @@ BEGIN
 		SET @errorLine = @errorLine + CHAR(13) + '- Dia invalido.'
 	END
 
-	IF(
-	( (@hcierre IS NULL) OR (@hapertura IS NULL) )
-	OR
-	(@hcierre <= @hapertura))
+	IF(( (@hcierre IS NULL) OR (@hapertura IS NULL) ) OR (@hcierre <= @hapertura))
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Horario invalido.'
@@ -139,20 +136,22 @@ CREATE PROCEDURE PnSPtrans.bajaHorarioOne (@horario INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	--controlValidezDatos
 	IF( (@horario IS NULL) OR (@horario <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Horario invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + 'ERROR: Horario invalido.'
 	END
 
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.HorarioParque WHERE IDHorarioP = @horario) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Horario inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + 'ERROR: Horario inexistente.'
 	END
 
 	IF (@errorCount = 0)
@@ -176,6 +175,8 @@ BEGIN
 			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
 		END CATCH
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaHorarioOne--';
@@ -191,20 +192,22 @@ AS
 BEGIN
 	DECLARE @IDout TABLE(ID INT)
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	--controlValidezDatos
 	IF( (@parque IS NULL) OR (@parque <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Parque invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + 'ERROR: Parque invalido.'
 	END
 
 	IF((@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @parque) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Parque inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + 'ERROR: Parque inexistente.'
 	END
 	
 	IF(@errorCount = 0)
@@ -233,6 +236,8 @@ BEGIN
 			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
 		END CATCH
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaHorarioAll--';

@@ -20,12 +20,16 @@ GO
 PRINT '--Creando SPabm para tablas Actividad...--';
 GO
 
-----TipoActividad
+/*
+================================================================
+abm TipoActividad
+================================================================
+*/
 --Alta
 --se permite costo de actividad = 0 para representar el caso de que dicha actividad sea gratis
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaTipoActividad'))
     DROP PROCEDURE PnSPabm.altaTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaTipoActividad (@descripcion varchar(30), @costo DECIMAL(7, 2))
 AS
 BEGIN
@@ -52,7 +56,7 @@ BEGIN
 	IF ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE DescripcionAct LIKE @descripcion) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT '- Tipo ya presente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo ya presente.'
 	END
 
 	IF(@errorCount = 0)
@@ -67,7 +71,7 @@ GO
 --Modificacion (Descripcion)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarDescripcionTipoActividad'))
     DROP PROCEDURE PnSPabm.modificarDescripcionTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarDescripcionTipoActividad (@tipo INT, @descripcionNEW varchar(30))
 AS
 BEGIN
@@ -118,7 +122,7 @@ GO
 --Modificacion (Costo)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarCostoTipoActividad'))
     DROP PROCEDURE PnSPabm.modificarCostoTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarCostoTipoActividad (@tipo INT, @costoNEW DECIMAL(7, 2))
 AS
 BEGIN
@@ -142,7 +146,7 @@ BEGIN
 	END
 
 	--controlExistencia
-	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct LIKE @tipo) )
+	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct = @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Tipo inexistente.'
@@ -162,52 +166,56 @@ GO
 --Baja
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTipoActividad'))
     DROP PROCEDURE PnSPabm.bajaTipoActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaTipoActividad (@tipo INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	--controlValidezDatos
 	IF( (@tipo IS NULL) OR (@tipo <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo invalido.'
 	END
 
 	--controlExistencia
-	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct LIKE @tipo) )
+	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct = @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Tipo inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Tipo inexistente.'
 	END
 
 	--controlReferencias
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE Tipo = @tipo) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Existe al menos una actividad relacionada a este Tipo. Eliminela para continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una actividad relacionada a este Tipo. Eliminela para continuar.'
 	END
 
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.TipoActividad
-		WHERE DescripcionAct = @tipo
+		WHERE IDTipoAct = @tipo
 	END
 	ELSE
 		PRINT @errorLine
 END;
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----Actividad
+/*
+================================================================
+abm Actividad
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaActividad'))
     DROP PROCEDURE PnSPabm.altaActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaActividad (@nombre varchar(30), @duracion INT, @cupo INT, @parque INT, @tipo INT)
 AS
 BEGIN
@@ -251,13 +259,13 @@ BEGIN
 	--controlExistencia
 	IF(@errorCount = 0)
 	BEGIN
-		IF NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque LIKE @parque)
+		IF NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @parque)
 		BEGIN
 			SET @errorCount = @errorCount + 1
 			SET @errorLine = @errorLine + CHAR(13) + '- Parque inexistente.'
 		END
 
-		IF NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct LIKE @tipo)
+		IF NOT EXISTS(SELECT 1 FROM PnTablas.TipoActividad WHERE IDTipoAct = @tipo)
 		BEGIN
 			SET @errorCount = @errorCount + 1
 			SET @errorLine = @errorLine + CHAR(13) + '- Tipo inexistente.'
@@ -284,7 +292,7 @@ GO
 --Modificacion (Nombre)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarNombreActividad'))
     DROP PROCEDURE PnSPabm.modificarNombreActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarNombreActividad (@actividad INT, @nombreNEW varchar(30))
 AS
 BEGIN
@@ -335,7 +343,7 @@ GO
 --Modificacion (Duracion)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarDuracionActividadParque'))
     DROP PROCEDURE PnSPabm.modificarDuracionActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarDuracionActividadParque (@actividad INT, @duracionNEW INT)
 AS
 BEGIN
@@ -379,7 +387,7 @@ GO
 --Modificacion (Cupo)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificarCupoActividadParque'))
     DROP PROCEDURE PnSPabm.modificarCupoActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificarCupoActividadParque (@actividad INT, @cupoNEW INT)
 AS
 BEGIN
@@ -423,33 +431,35 @@ GO
 --Baja
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaActividadParque'))
     DROP PROCEDURE PnSPabm.bajaActividadParque
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaActividadParque (@actividad INT)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
 	--controlValidezDatos
 	IF( (@actividad IS NULL) OR (@actividad <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Actividad invalida.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Actividad invalida.'
 	END
 
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Actividad inexistente.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Actividad inexistente.'
 	END
 
 	--controlReferencias
 	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Existe al menos un horario asociado a esta actividad. Eliminelo antes de continuar.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos un horario asociado a esta actividad. Eliminelo antes de continuar.'
 	END
 
 	IF(@errorCount = 0)
@@ -457,16 +467,20 @@ BEGIN
 		DELETE FROM PnTablas.Actividad
 		WHERE IDActividad = @actividad
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 
--------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------
-----HorarioActividad
+/*
+================================================================
+abm HorarioActividad
+================================================================
+*/
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaHActividad'))
     DROP PROCEDURE PnSPabm.altaHActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.altaHActividad (@actividad INT, @fechaAct DATE, @hInicio TIME)
 AS
 BEGIN
@@ -496,7 +510,7 @@ BEGIN
 	END
 
 	--controlExistencia
-	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDAactividad = @actividad) )
+	IF ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Actividad WHERE IDActividad = @actividad) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Actividad inexistente.'
@@ -507,13 +521,15 @@ BEGIN
 		INSERT INTO PnTablas.HorarioActividad (Actividad, FechaActividad, HoraInicio)
 		VALUES (@actividad, @fechaAct, @hInicio)
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 
 --Modificacion (Fecha)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionFechaActividad'))
     DROP PROCEDURE PnSPabm.modificacionFechaActividad
-GO;
+GO
 CREATE PROCEDURE PnSPabm.modificacionFechaActividad (@actividad INT, @fechaAct DATE, @hInicio TIME, @fechaNEW DATE)
 AS
 BEGIN
@@ -552,7 +568,7 @@ BEGIN
 	IF ( 
 	(@errorCount = 0) 
 	AND 
-	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
+	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- El horario a modificar no existe.'
@@ -562,16 +578,18 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.HorarioActividad
 		SET FechaActividad = @fechaNEW
-		WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio
+		WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 
 --Modificacion (Hora)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionHoraActividad'))
     DROP PROCEDURE PnSPabm.modificacionHoraActividad
-GO;
-CREATE PROCEDURE PnSPabm.modificacionHoraActividad (@actividad INT, @fechaAct DATE, @hInicio TIME, @hInicioNEW DATE)
+GO
+CREATE PROCEDURE PnSPabm.modificacionHoraActividad (@actividad INT, @fechaAct DATE, @hInicio TIME, @hInicioNEW TIME)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -599,10 +617,10 @@ BEGIN
 		SET @errorLine = @errorLine + CHAR(13) + '- Hora invalida.'
 	END
 
-	IF( 
-	(@hInicio IS NULL) 
-	OR
-	( (@fechaAct = CONVERT(DATE, GETDATE())) AND (@hInicioNEW <= CONVERT(TIME, GETDATE())) ))
+	IF ((@hInicioNEW IS NULL) OR 
+		((@fechaAct = CONVERT(DATE, GETDATE())) AND 
+		(CAST(@fechaAct AS DATETIME) + CAST(@hInicioNEW AS DATETIME) <= GETDATE()) ) 
+    )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Nueva hora invalida.'
@@ -612,7 +630,7 @@ BEGIN
 	IF ( 
 	(@errorCount = 0) 
 	AND 
-	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
+	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- El horario a modificar no existe.'
@@ -622,15 +640,17 @@ BEGIN
 	BEGIN
 		UPDATE PnTablas.HorarioActividad
 		SET HoraInicio = @hInicioNEW
-		WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio
+		WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio
 	END
+	ELSE
+		PRINT @errorLine
 END;
 GO
 
 --Baja
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHActividadOne'))
     DROP PROCEDURE PnSPabm.bajaHActividadOne
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaHActividadOne (@actividad INT, @fechaAct DATE, @hInicio TIME)
 AS
 BEGIN
@@ -662,7 +682,7 @@ BEGIN
 	IF ( 
 	(@errorCount = 0) 
 	AND 
-	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
+	NOT EXISTS(SELECT 1 FROM PnTablas.HorarioActividad WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- El horario a eliminar no existe.'
@@ -671,7 +691,7 @@ BEGIN
 	IF(@errorCount = 0)
 	BEGIN
 		DELETE FROM PnTablas.HorarioActividad
-		WHERE IDAactividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio 
+		WHERE Actividad = @actividad AND FechaActividad = @fechaAct AND HoraInicio = @hInicio 
 	END
 	ELSE
 		PRINT @errorLine
@@ -681,29 +701,13 @@ GO
 --BajaMuchos (para eliminar todas las actividades cuya fecha ya paso)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHActividadAll'))
     DROP PROCEDURE PnSPabm.bajaHActividadAll
-GO;
+GO
 CREATE PROCEDURE PnSPabm.bajaHActividadAll
 AS
 BEGIN
-	DECLARE @errorCount INT
-	DECLARE @errorLine varchar(100)
+	DELETE FROM PnTablas.HorarioActividad
+	WHERE FechaActividad < CONVERT(DATE, GETDATE());
 
-	SET @errorCount = 0
-	SET @errorLine = 'Error/es:'
-
-	--controlValidez
-	IF ( (@fechaAct IS NULL) OR (@fechaAct >= CONVERT(DATE, GETDATE())) )
-	BEGIN
-		SET @errorCount = @errorCount + 1
-		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
-	END
-
-	IF(@errorCount = 0)
-	BEGIN
-		DELETE FROM PnTablas.HorarioActividad
-		WHERE FechaActividad < CONVERT(DATE, GETDATE()) 
-	END
-	ELSE
-		PRINT @errorLine
+	PRINT '-- Limpieza de horarios pasados completada. --';
 END;
 GO
