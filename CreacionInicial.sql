@@ -53,3 +53,11 @@ BEGIN
 	PRINT '--Creado Schema: PnSPtrans--'
 END;
 GO
+
+----Creacion de Schema para otros SP
+IF NOT EXISTS (SELECT name FROM sys.schemas WHERE name = 'PnSP')
+BEGIN
+	EXECUTE('CREATE SCHEMA PnSP')
+	PRINT '--Creado Schema: PnSP--'
+END;
+GO

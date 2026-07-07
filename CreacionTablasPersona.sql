@@ -53,12 +53,11 @@ BEGIN
 		Parque INT NULL,
 		Estado varchar(10),
 		FechaInicio DATE,
-
-		PRIMARY KEY(IDGuardaParque),
 		FOREIGN KEY(IDGuardaParque) REFERENCES PnTablas.Persona(IDPersona),
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
+		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
+		PRIMARY KEY(IDGuardaParque)
 	)
-	PRINT '--Creada Tabla: Guardaparque--';
+	PRINT '--Creada Tabla: Guardaparque--'
 END;
 GO
 
@@ -71,9 +70,8 @@ BEGIN
 		Titulo varchar(100),
 		VencimientoHabilitacion DATE,
 		NumeroHabilitacion INT,
-
-		PRIMARY KEY (IDGuia),
-		FOREIGN KEY(IDGuia) REFERENCES PnTablas.Persona(IDPersona)
+		FOREIGN KEY(IDGuia) REFERENCES PnTablas.Persona(IDPersona),
+		PRIMARY KEY (IDGuia)
 	)
 	PRINT '--Creada Tabla: Guia--'
 END;
@@ -97,19 +95,16 @@ GO
 --Tabla Historial
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Historial')
 BEGIN
-	CREATE TABLE PnTablas.Historial
+	CREATE TABLE PnTablas.TieneHistorial
 	(
 		IDregistro INT IDENTITY(1, 1) PRIMARY KEY,
 		Guardaparque INT NOT NULL,
 		Parque INT NOT NULL,
 		FechaInicio DATE,
 		FechaEgreso DATE,
-		RazonEgreso varchar(40),
-		
-		FOREIGN KEY(Guardaparque) REFERENCES PnTablas.GuardaParque(IDGuardaParque),
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
+		RazonEgreso varchar(40)
 	)
-	PRINT '--Creada Tabla: Historial--';
+	PRINT '--Creada Tabla: TieneHistorial--';
 END;
 GO
 
@@ -123,11 +118,10 @@ BEGIN
 	(
 		Guia INT,
 		Especialidad INT,
-
-		PRIMARY KEY(Guia, Especialidad),
 		FOREIGN KEY(Guia) REFERENCES PnTablas.Guia(IDGuia),
-		FOREIGN KEY(Especialidad) REFERENCES PnTablas.Especialidad(IDEspecialidad)
+		FOREIGN KEY(Especialidad) REFERENCES PnTablas.Especialidad(IDEspecialidad),
+		PRIMARY KEY(Guia, Especialidad)
 	)
-	PRINT '--Creada Tabla: TieneEspecialidad--';
+	PRINT '--Creada Tabla: TieneEspecialidad--'
 END;
 GO

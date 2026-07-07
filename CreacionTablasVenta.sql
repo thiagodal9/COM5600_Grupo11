@@ -33,7 +33,7 @@ BEGIN
 	(
 		IDPagoVenta INT IDENTITY(1,1) PRIMARY KEY,
 		Importe DECIMAL(10,2),
-		FechaHoraTransaccion DATETIME,
+		FechaHoraTransaccion DATE,
 		Item char(30),
 		Metodo char(30)
 	)
@@ -62,7 +62,6 @@ BEGIN
 		Precio DECIMAL(10,2),
 		TipoEntrada INT,
 		Parque INT,
-
 		FOREIGN KEY(TipoEntrada) REFERENCES PnTablas.TipoEntrada,
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
 	)
@@ -82,8 +81,6 @@ BEGIN
 		Entrada INT,
 		FechaAcceso DATE,
 		Cantidad INT,
-
-		PRIMARY KEY(Pago, Entrada, FechaAcceso),
 		FOREIGN KEY(Pago) REFERENCES PnTablas.PagoVenta(IDPagoVenta),
 		FOREIGN KEY(Entrada) REFERENCES PnTablas.Entrada(IDEntrada)
 	)
@@ -101,10 +98,9 @@ BEGIN
 		FechaActividad DATE,
 		HoraInicio TIME,
 		Cantidad INT,
-
-		PRIMARY KEY(Pago, Actividad, FechaActividad, HoraInicio),
 		FOREIGN KEY(Pago) REFERENCES PnTablas.PagoVenta(IDPagoVenta),
-		FOREIGN KEY(Actividad, FechaActividad, HoraInicio) REFERENCES PnTablas.HorarioActividad(Actividad, FechaActividad, HoraInicio)
+		FOREIGN KEY(Actividad, FechaActividad, HoraInicio) REFERENCES PnTablas.HorarioActividad(Actividad, FechaActividad, HoraInicio),
+		PRIMARY KEY(Pago, Actividad, FechaActividad, HoraInicio)
 	)
 	PRINT '--Creada Tabla: TieneHActividad--'
 END;
@@ -113,7 +109,6 @@ GO
 PRINT '--Creando tablas de apoyo...';
 GO
 
-/* ESTO VA EN LA SESION CORRESPONDIENTE
 --Tabla #ventaEntradas
 IF OBJECT_ID('tempdb..#ventaEntradas') IS NULL
 BEGIN
@@ -123,9 +118,7 @@ BEGIN
 		Entrada INT,
 		Cantidad INT,
 		FechaAcceso DATE,
-		ID INT,
-
-		FOREIGN KEY(Entrada) REFERENCES PnTablas.Entrada(IDEntrada)
+		ID INT
 	)
 	PRINT '--Creada Tabla: #ventaEntradas--'
 END;
@@ -146,4 +139,3 @@ BEGIN
 	PRINT '--Creada Tabla: #ventaActividades--'
 END;
 GO
-*/

@@ -21,9 +21,8 @@ BEGIN
 END;
 GO
 
-PRINT '--CreacionTablasConcesion--' + CHAR(13) + '--Creando tablas principales...';
+PRINT '--CreacionTablasEmpresa--' + CHAR(13) + '--Creando tablas principales...';
 GO
-
 
 --Tabla Empresa
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Empresa')
@@ -50,7 +49,6 @@ BEGIN
 		FechaInicioConcesion DATE,
 		FechaFinConcesion DATE,
 		CostoAlquiler DECIMAL(10,2),
-
 		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY(Empresa) REFERENCES PnTablas.Empresa(IDEmpresa)
 	)
@@ -67,8 +65,7 @@ BEGIN
 		Concesion INT,
 		Importe DECIMAL(10,2),
 		Vencimiento DATE,
-		Estado varchar(10),
-
+		Estado varchar(7),
 		FOREIGN KEY(Concesion) references PnTablas.Concesion(IDConcesion)
 	)
 	PRINT '--Creada Tabla: HistorialPago--'
