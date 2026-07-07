@@ -22,55 +22,31 @@ GO
 
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
-----Cargado Inicial con Inserciones exitosas
-
---TipoParque
-EXECUTE PnSPabm.altaTipoParque @tipo = 'Reserva';
-EXECUTE PnSPabm.altaTipoParque @tipo = 'Reserva Aviaria';
-EXECUTE PnSPabm.altaTipoParque @tipo = 'Centro Pescador';
+----Chequeo de datos cargados
 
 SELECT *
 FROM PnTablas.TipoParque;
 GO
 
---Provincia
-EXECUTE PnSPabm.altaProvincia @nombre = 'rio negro';
-EXECUTE PnSPabm.altaProvincia @nombre = 'Santa Cruz';
-EXECUTE PnSPabm.altaProvincia @nombre = 'Buenos Aires';
-
 SELECT *
 FROM PnTablas.Provincia;
 GO
-
---Parque
-EXECUTE PnSPabm.altaParque @nombre = 'Parque Iguazu', @ubicacion = 1, @Superficie = 2000, @tipo = 1;
-EXECUTE PnSPabm.altaParque @nombre = 'Parque Pochoclo', @ubicacion = 1, @Superficie = 1500, @tipo = 2;
-EXECUTE PnSPabm.altaParque @nombre = 'Parque Belgrano', @ubicacion = 2, @Superficie = 3500, @tipo = 1;
 
 SELECT *
 FROM PnTablas.Parque;
 GO
 
---Dia
-EXECUTE PnSPabm.altaDias;
-
 SELECT *
 FROM PnTablas.Dia;
 GO
-
---TelefonoParque
-EXECUTE PnSPabm.altaTelefonoParque @numero = '4567-0345', @parque = 1;
-EXECUTE PnSPabm.altaTelefonoParque @numero = '4567-0352', @parque = 1;
-EXECUTE PnSPabm.altaTelefonoParque @numero = '345-0223', @parque = 2;
 
 SELECT *
 FROM PnTablas.TelefonoParque;
 GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
+----TESTING
 
-----Testing
--------------------------------------------------------------------------------------
 ----TipoParque
 --Insercion fallida
 EXECUTE PnSPabm.altaTipoParque @tipo = NULL;
