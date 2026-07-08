@@ -8,4 +8,7 @@
 *Agregado de SPs para limpieza de registros para tablas PagoVenta/TieneHActividad
 
 *Se hizo una modificacion menor al codigo de la app
+
+*Se agrego un app.txt al branch app con informacion acerca de como correr el proyecto 
+\y la creacion del codigo
 ----------------------------------------------------------------------------------------
