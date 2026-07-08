@@ -143,11 +143,16 @@ public class APPN {
 			operacion.execute(lineaOperacion);
 			warning = operacion.getWarnings();
 			
-			while (warning != null) 
+			if(warning != null)
 			{
-			    System.out.println(warning.getMessage() + "\n");
-			    warning = warning.getNextWarning();
+				while (warning != null) 
+				{
+				    System.out.println(warning.getMessage());
+				    warning = warning.getNextWarning();
+				}
 			}
+			else
+				System.out.println("--Operacion exitosa.--\n");
 		} 
 		catch (SQLException e) 
 		{e.printStackTrace();}
