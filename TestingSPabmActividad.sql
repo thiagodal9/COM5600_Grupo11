@@ -19,15 +19,12 @@ BEGIN
 END;
 GO
 
-/*
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
-----Cargado Inicial con Inserciones exitosas
+----Chequeo de datos cargados
 
---TipoActividad
-EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Taller', @costo = 100;
-EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Caminata Guiada', @costo = 1000.50;
-EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Caminata Grupal sin Guia', @costo = 500;
+SELECT *
+FROM PnTablas.Parque
 GO
 
 SELECT *
@@ -35,36 +32,15 @@ FROM PnTablas.TipoActividad;
 GO
 
 SELECT *
-FROM PnTablas.Parque
-
---Actividad
---PnSPabm.altaActividad (@nombre varchar(30), @duracion INT, @cupo INT, @parque INT, @tipo INT)
-EXECUTE PnSPabm.nuevoActividadParque 
-@nombre = 'Pesca en Rio Salado', 
-@duracion = 360, 
-@cupo = 10, 
-@parque = 1, 
-@tipo = 1;
-EXECUTE PnSPabm.nuevoActividadParque 
-@nombre = 'Caminata por Bosque Salado', 
-@duracion = 240, 
-@cupo = 25, 
-@parque = 1, 
-@tipo = 2;
-EXECUTE PnSPabm.nuevoActividadParque 
-@nombre = 'Caminata por Bosque Pochoclo', 
-@duracion = 240, 
-@cupo = 25, 
-@parque = 2, 
-@tipo = 2;
+FROM PnTablas.Actividad;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
-GO
+--falta testing horarioActividad
 
-----Testing
 -------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+----TESTING (las inserciones se dan por probadas al llenar las tablas con datos iniciales para testing)
+
 ----TipoActividad
 --Insercion Fallida
 EXECUTE PnSPabm.altaTipoActividad @descripcion = NULL, @costo = NULL;
@@ -102,15 +78,13 @@ EXECUTE PnSPabm.modificarCostoTipoActividad @tipo = -2, @costoNEW = 50000.50;
 EXECUTE PnSPabm.modificarCostoTipoActividad @tipo = 10, @costoNEW = 50000.50;
 GO
 
-SELECT *
-FROM PnTablas.TipoActividad;
+SELECT * FROM PnTablas.TipoActividad;
 GO
 
 --Modificacion (Costo) Exitosa
 EXECUTE PnSPabm.modificarCostoTipoActividad @tipo = 1, @costoNEW = 3000;
 
-SELECT *
-FROM PnTablas.TipoActividad;
+SELECT * FROM PnTablas.TipoActividad;
 GO
 
 --Baja Fallida
@@ -120,35 +94,32 @@ EXECUTE PnSPabm.bajaTipoActividad @tipo = 1
 EXECUTE PnSPabm.bajaTipoActividad @tipo = 24
 GO
 
-SELECT *
-FROM PnTablas.TipoActividad;
+SELECT * FROM PnTablas.TipoActividad;
 GO
 
 --Baja Exitosa
 EXECUTE PnSPabm.bajaTipoActividad @tipo = 3
 GO
 
-SELECT *
-FROM PnTablas.TipoActividad;
+SELECT * FROM PnTablas.TipoActividad;
 GO
 
 -------------------------------------------------------------------------------------
---Actividad
---PnSPabm.altaActividad (@nombre varchar(30), @duracion INT, @cupo INT, @parque INT, @tipo INT)
+----Actividad
 --Insercion Fallida
-EXECUTE PnSPabm.nuevoActividadParque 
+EXECUTE PnSPabm.altaActividad 
 @nombre = NULL, 
 @duracion = NULL, 
 @cupo = NULL, 
 @parque = NULL, 
 @tipo = NULL;
-EXECUTE PnSPabm.nuevoActividadParque 
+EXECUTE PnSPabm.altaActividad 
 @nombre = NULL, 
 @duracion = 0, 
 @cupo = -10, 
 @parque = 1, 
 @tipo = 1;
-EXECUTE PnSPabm.nuevoActividadParque 
+EXECUTE PnSPabm.altaActividad 
 @nombre = 'Pesca en Rio Salado', 
 @duracion = 220, 
 @cupo = 25, 
@@ -156,82 +127,158 @@ EXECUTE PnSPabm.nuevoActividadParque
 @tipo = 1;
 GO
 
-SELECT *
-FROM PnTablas.Actividad;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Nombre) Fallida
-EXECUTE PnSPabm.cambiarNombreActividadParque @actividad = NULL, @nombreNEW = NULL;
-EXECUTE PnSPabm.cambiarNombreActividadParque @actividad = -2, @nombreNEW = 'Trecking por Bosque Salado';
-EXECUTE PnSPabm.cambiarNombreActividadParque @actividad = 1, @nombreNEW = 'Caminata por Bosque Salado';
-EXECUTE PnSPabm.cambiarNombreActividadParque @actividad = 45, @nombreNEW = 'Trecking por Bosque Salado';
+EXECUTE PnSPabm.modificarNombreActividad @actividad = NULL, @nombreNEW = NULL;
+EXECUTE PnSPabm.modificarNombreActividad @actividad = -2, @nombreNEW = 'Trecking por Bosque Salado';
+EXECUTE PnSPabm.modificarNombreActividad @actividad = 1, @nombreNEW = 'Caminata por bosque salado';
+EXECUTE PnSPabm.modificarNombreActividad @actividad = 45, @nombreNEW = 'Trecking por Bosque Salado';
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Nombre) Exitosa
-EXECUTE PnSPabm.cambiarNombreActividadParque @actividad = 2, @nombreNEW = 'Trecking por Bosque Salado';
+EXECUTE PnSPabm.modificarNombreActividad @actividad = 2, @nombreNEW = 'Trecking por Bosque Salado';
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Duracion) Fallida
-EXECUTE PnSPabm.modificarDuracionActividadParque @actividad = NULL, @duracionNEW = -2;
-EXECUTE PnSPabm.modificarDuracionActividadParque @actividad = 1, @duracionNEW = NULL;
-EXECUTE PnSPabm.modificarDuracionActividadParque @actividad = 1, @duracionNEW = 0;
+EXECUTE PnSPabm.modificarDuracionActividad @actividad = NULL, @duracionNEW = -2;
+EXECUTE PnSPabm.modificarDuracionActividad @actividad = 1, @duracionNEW = NULL;
+EXECUTE PnSPabm.modificarDuracionActividad @actividad = 1, @duracionNEW = 0;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Duracion) Exitosa
-EXECUTE PnSPabm.modificarDuracionActividadParque @actividad = 1, @duracionNEW = 30;
+EXECUTE PnSPabm.modificarDuracionActividad @actividad = 1, @duracionNEW = 30;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Cupo) Fallida
-EXECUTE PnSPabm.modificarCupoActividadParque @actividad = NULL, @cupoNEW = -2;
-EXECUTE PnSPabm.modificarCupoActividadParque @actividad = 1, @cupoNEW = NULL;
-EXECUTE PnSPabm.modificarCupoActividadParque @actividad = 1, @cupoNEW = 0;
+EXECUTE PnSPabm.modificarCupoActividad @actividad = NULL, @cupoNEW = -2;
+EXECUTE PnSPabm.modificarCupoActividad @actividad = 1, @cupoNEW = NULL;
+EXECUTE PnSPabm.modificarCupoActividad @actividad = 1, @cupoNEW = 0;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Modificacion (Cupo) Exitosa
-EXECUTE PnSPabm.modificarCupoActividadParque @actividad = 1, @cupoNEW = 30;
+EXECUTE PnSPabm.modificarCupoActividad @actividad = 1, @cupoNEW = 30;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Baja Fallida
-EXECUTE PnSPabm.bajaActividadParque @actividad = NULL;
-EXECUTE PnSPabm.bajaActividadParque @actividad = -1;
-EXECUTE PnSPabm.bajaActividadParque @actividad = 0;
-EXECUTE PnSPabm.bajaActividadParque @actividad = 45;
-EXECUTE PnSPabm.bajaActividadParque @actividad = 1;
+EXECUTE PnSPabm.bajaActividad @actividad = NULL;
+EXECUTE PnSPabm.bajaActividad @actividad = -1;
+EXECUTE PnSPabm.bajaActividad @actividad = 0;
+EXECUTE PnSPabm.bajaActividad @actividad = 45;
+EXECUTE PnSPabm.bajaActividad @actividad = 1;
 GO
 
-SELECT *
-FROM PnTablas.ActividadParque;
+SELECT * FROM PnTablas.Actividad;
 GO
 
 --Baja Exitosa
-EXECUTE PnSPabm.bajaActividadParque @actividad = 3;
+EXECUTE PnSPabm.bajaActividad @actividad = 3;
+GO
+
+SELECT * FROM PnTablas.Actividad;
+GO
+
+-------------------------------------------------------------------------------------
+----HorarioActividad
+--Insercion Fallida
+EXECUTE PnSPabm.altaHActividad @actividad = NULL, @fechaAct = NULL, @hInicio = NULL;
+EXECUTE PnSPabm.altaHActividad @actividad = -2, @fechaAct = '2026-12-29', @hInicio = '18:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 50, @fechaAct = '2026-12-29', @hInicio = '18:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '17:00';
 GO
 
 SELECT *
-FROM PnTablas.ActividadParque;
+FROM PnTablas.HorarioActividad;
 GO
-*/
+
+--Modificacion(fecha) Fallida
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = NULL, @fechaAct = NULL, @hInicio = NULL, @fechaNew = NULL;
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = -2, @fechaAct = '2026-12-26', @hInicio = '17:00', @fechaNew = '2026-12-30';
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = 50, @fechaAct = '2026-12-26', @hInicio = '17:00', @fechaNew = '2026-12-30';
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '18:00', @fechaNew = '2026-12-29';
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '18:00', @fechaNew = '2026-03-29';
+
+SELECT *
+FROM PnTablas.HorarioActividad;
+GO
+
+--Modificacion(fecha) Exitosa
+EXECUTE PnSPabm.modificacionFechaActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '18:00', @fechaNew = '2026-12-27';
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Modificacion(hora) Fallida
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = NULL, @fechaAct = NULL, @hInicio = NULL, @hInicioNEW = NULL
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = -2, @fechaAct = NULL, @hInicio = NULL, @hInicioNEW = NULL
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = 50, @fechaAct = '2026-10-29', @hInicio = '17:00', @hInicioNEW = '20:00'
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = 2, @fechaAct = '2026-04-29', @hInicio = '17:00', @hInicioNEW = '20:00'
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = 2, @fechaAct = '2026-12-29', @hInicio = '17:00', @hInicioNEW = '18:00'
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Modificacion(hora) Exitosa
+EXECUTE PnSPabm.modificacionHoraActividad @actividad = 2, @fechaAct = '2026-12-29', @hInicio = '17:00', @hInicioNEW = '20:00';
+GO
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Baja(One) Fallida
+EXECUTE PnSPabm.bajaHActividadOne @actividad = NULL, @fecha = NULL, @hInicio = NULL;
+EXECUTE PnSPabm.bajaHActividadOne @actividad = -2, @fecha = NULL, @hInicio = NULL;
+EXECUTE PnSPabm.bajaHActividadOne @actividad = 50, @fecha = '2026-12-29', @hInicio = '20:00';
+EXECUTE PnSPabm.bajaHActividadOne @actividad = 2, @fecha = '2026-12-29', @hInicio = '18:00';
+GO
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Baja(One) Exitosa
+EXECUTE PnSPabm.bajaHActividadOne @actividad = 2, @fecha = '2026-12-29', @hInicio = '20:00';
+GO
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Baja(All) Fallida
+EXECUTE PnSPabm.bajaHActividadAll;
+GO
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO
+
+--Baja(All) Exitosa
+--Elimino primero el registro en conflicto
+EXECUTE PnSPabm.bajaTHActividadOne
+@pago = 3,
+@actividad = 1,
+@fechaActividad = '2025-12-29',
+@horaInicio = '17:00';
+GO
+
+EXECUTE PnSPabm.bajaHActividadAll;
+GO
+
+SELECT * FROM PnTablas.HorarioActividad;
+GO

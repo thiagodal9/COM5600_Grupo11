@@ -17,6 +17,9 @@ BEGIN
 END;
 GO
 
+PRINT '--Llenando tablas con datos para ejecutar operaciones de testing...--';
+GO
+
 --Se hace el llenado de tablas para testing
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
@@ -88,4 +91,98 @@ EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaDi
 BEGIN
 	EXECUTE PnSPabm.altaDias
 END;
+GO
+
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+--HorarioParque
+EXECUTE PnSPtrans.altaHorario
+@parque = 1,
+@dia = 1, 
+@hapertura = '10:30',
+@hcierre = '17:00',
+@temporada = 'Invierno';
+EXECUTE PnSPtrans.altaHorario
+@parque = 1,
+@dia = 2,
+@hapertura = '09:00',
+@hcierre = '15:00',
+@temporada = 'Verano';
+EXECUTE PnSPtrans.altaHorario
+@parque = 1,
+@dia = 1,
+@hapertura = '09:00',
+@hcierre = '15:00',
+@temporada = 'Verano';
+EXECUTE PnSPtrans.altaHorario
+@parque = 2,
+@dia = 1,
+@hapertura = '09:00',
+@hcierre = '11:00',
+@temporada = 'Primavera';
+GO
+EXECUTE PnSPtrans.altaHorario
+@parque = 2,
+@dia = 2,
+@hapertura = '09:00',
+@hcierre = '11:00',
+@temporada = 'Primavera';
+GO
+EXECUTE PnSPtrans.altaHorario
+@parque = 2,
+@dia = 3,
+@hapertura = '09:00',
+@hcierre = '11:00',
+@temporada = 'Primavera';
+GO
+
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+--TipoActividad
+EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Taller', @costo = 100;
+EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Caminata Guiada', @costo = 1000.50;
+EXECUTE PnSPabm.altaTipoActividad @descripcion = 'Caminata Grupal sin Guia', @costo = 500;
+GO
+
+-------------------------------------------------------------------------------------
+--Actividad
+EXECUTE PnSPabm.altaActividad 
+@nombre = 'Pesca en Rio Salado', 
+@duracion = 360, 
+@cupo = 10, 
+@parque = 1, 
+@tipo = 1;
+EXECUTE PnSPabm.altaActividad 
+@nombre = 'Caminata por Bosque Salado', 
+@duracion = 240, 
+@cupo = 25, 
+@parque = 1, 
+@tipo = 2;
+EXECUTE PnSPabm.altaActividad 
+@nombre = 'Caminata por Bosque Pochoclo', 
+@duracion = 240, 
+@cupo = 25, 
+@parque = 2, 
+@tipo = 2;
+GO
+
+-------------------------------------------------------------------------------------
+--HorarioActividad
+--PnSPabm.altaHActividad (@actividad INT, @fechaAct DATE, @hInicio TIME)
+EXECUTE PnSPabm.altaHActividad @actividad = 1, @fechaAct = '2026-12-29', @hInicio = '18:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 1, @fechaAct = '2026-12-07', @hInicio = '10:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 1, @fechaAct = '2026-12-07', @hInicio = '12:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '17:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 2, @fechaAct = '2026-12-26', @hInicio = '18:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 2, @fechaAct = '2026-12-29', @hInicio = '17:00';
+EXECUTE PnSPabm.altaHActividad @actividad = 2, @fechaAct = '2026-12-29', @hInicio = '18:00';--asociado a pago a traves tieneHActividad
+GO
+
+--datos forzados para probar SPs
+INSERT INTO PnTablas.HorarioActividad (Actividad, FechaActividad, HoraInicio)
+VALUES
+(2, '2025-12-29', '18:00'),
+(2, '2025-12-29', '17:00'),
+(2, '2025-12-15', '17:00'),
+(1, '2025-12-29', '17:00');--asociado a pago a traves tieneHActividad
 GO

@@ -34,50 +34,7 @@ GO
 
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
-----Cargado Inicial con Inserciones exitosas
-
---HorarioParque
---(@parque INT, @dia INT, @hapertura TIME, @hcierre TIME, @temporada varchar(10))
-EXECUTE PnSPtrans.altaHorario
-@parque = 1,
-@dia = 1, 
-@hapertura = '10:30',
-@hcierre = '17:00',
-@temporada = 'Invierno';
-EXECUTE PnSPtrans.altaHorario
-@parque = 1,
-@dia = 2,
-@hapertura = '09:00',
-@hcierre = '15:00',
-@temporada = 'Verano';
-EXECUTE PnSPtrans.altaHorario
-@parque = 1,
-@dia = 1,
-@hapertura = '09:00',
-@hcierre = '15:00',
-@temporada = 'Verano';
-EXECUTE PnSPtrans.altaHorario
-@parque = 2,
-@dia = 1,
-@hapertura = '09:00',
-@hcierre = '11:00',
-@temporada = 'Primavera';
-GO
-EXECUTE PnSPtrans.altaHorario
-@parque = 2,
-@dia = 2,
-@hapertura = '09:00',
-@hcierre = '11:00',
-@temporada = 'Primavera';
-GO
-EXECUTE PnSPtrans.altaHorario
-@parque = 2,
-@dia = 3,
-@hapertura = '09:00',
-@hcierre = '11:00',
-@temporada = 'Primavera';
-GO
-
+----Chequeo de datos cargados
 SELECT IDHorarioP, 
 CAST(HoraApertura AS char(5)) AS [Hora de Apertura],
 CAST(HoraCierre AS char(5)) AS [Hora de Cierre],
@@ -89,10 +46,9 @@ FROM PnTablas.Abre;
 GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
+----TESTING
 
-----Testing
--------------------------------------------------------------------------------------
-
+----HorarioParque
 --Insercion fallida
 EXECUTE PnSPtrans.altaHorario
 @parque = NULL,
