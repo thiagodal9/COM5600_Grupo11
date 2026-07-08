@@ -55,12 +55,6 @@ begin
             SET @errorCount = @errorCount + 1
 	        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene asignaciones de guardaparque activas, debe darlas de baja primero.'
         END
-
-        IF ( EXISTS(select 1 from PnTablas.Actividad where Guia = @idPersona) )
-        BEGIN
-            SET @errorCount = @errorCount + 1
-	        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene asignaciones de guia activas, debe darlas de baja primero.'
-        END
     END
     
     IF(@errorCount = 0)
