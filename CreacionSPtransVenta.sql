@@ -26,9 +26,6 @@ abm PagoVenta
 ================================================================
 */
 --Baja
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaVenta'))
-	DROP PROCEDURE PnSPabm.bajaVenta
-GO
 create procedure PnSPabm.bajaVenta
 @idPagoVenta int
 as
@@ -55,10 +52,10 @@ begin
 		WHERE Pago = @idPagoVenta
 
 		DELETE FROM PnTablas.TieneHActividad
-		WHERE Pago = @idPagoVenta
+		WHERE Pago  = @idPagoVenta
 
 		DELETE FROM PnTablas.PagoVenta
-		WHERE IDPagoVenta = @idPagoVenta
+		WHERE idPagoVenta = @idPagoVenta
 
 		COMMIT TRANSACTION
 	END TRY
@@ -77,10 +74,7 @@ Compra de Entradas
 */
 -------------------------------------------------------------------------------------
 --apilar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.reservarEntradas'))
-	DROP PROCEDURE PnSPtrans.reservarEntradas
-GO
-CREATE PROCEDURE PnSPtrans.reservarEntradas (@entrada INT, @cantidad INT, @fecha DATE)
+CREATE PROCEDURE PnSPabm.reservarEntradas (@entrada INT, @cantidad INT, @fecha DATE)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -128,10 +122,7 @@ END;
 GO
 
 --retroceder compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.cancelarReservaEntradas'))
-	DROP PROCEDURE PnSPtrans.cancelarReservaEntradas
-GO
-CREATE PROCEDURE PnSPtrans.cancelarReservaEntradas
+CREATE PROCEDURE PnSPabm.cancelarReservaEntradas
 AS
 BEGIN
 	EXECUTE PnSPabm.bajaAllVentaEntradas
@@ -139,9 +130,6 @@ END;
 GO
 
 --confirmar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraE'))
-	DROP PROCEDURE PnSPtrans.confirmarCompraE
-GO
 CREATE PROCEDURE PnSPtrans.confirmarCompraE @metodo varchar(9)
 AS
 BEGIN
@@ -229,10 +217,7 @@ Venta de Actividades
 */
 -------------------------------------------------------------------------------------
 --apilar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.reservarActividad'))
-	DROP PROCEDURE PnSPtrans.reservarActividad
-GO
-CREATE PROCEDURE PnSPtrans.reservarActividad (@actividad INT, @cantidad INT, @fecha DATE, @hora TIME)
+CREATE PROCEDURE PnSPabm.reservarActividad (@actividad INT, @cantidad INT, @fecha DATE, @hora TIME)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -295,10 +280,7 @@ GO
 
 -------------------------------------------------------------------------------------
 --retroceder reserva
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.cancelarReservaActividades'))
-	DROP PROCEDURE PnSPtrans.cancelarReservaActividades
-GO
-CREATE PROCEDURE PnSPtrans.cancelarReservaActividades
+CREATE PROCEDURE PnSPabm.cancelarReservaActividades
 AS
 BEGIN
 	EXECUTE PnSPabm.bajaAllVentaActividades
@@ -307,9 +289,6 @@ GO
 
 -------------------------------------------------------------------------------------
 --confirmar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraA'))
-	DROP PROCEDURE PnSPtrans.confirmarCompraA
-GO
 CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9)
 AS
 BEGIN

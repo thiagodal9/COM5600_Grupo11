@@ -1,0 +1,11 @@
+----CAMBIOS
+----------------------------------------------------------------------------------------
+--Leandro
+*Revision/Correccion/Finalizacion de script de testing para SPabm de tablas Actividad
+\Se corrigio el codigo en varios SP y en la creacion de algunas tablas
+\\Se sumaron los datos de entrada para pruebas al script de Dataset_testing
+
+*Agregado de SPs para limpieza de registros para tablas PagoVenta/TieneHActividad
+
+*Se hizo una modificacion menor al codigo de la app
+----------------------------------------------------------------------------------------

@@ -335,11 +335,7 @@ BEGIN
 	END
 
 	IF(@errorCount = 0)
-	BEGIN
 		INSERT INTO PnTablas.Parque (NombreParque, Ubicacion, Superficie, Tipo) VALUES (@nombre, @ubicacion, @Superficie, @tipo)
-
-		PRINT '--Operacion exitosa.--'
-	END
 	ELSE
 		PRINT @errorLine
 END;

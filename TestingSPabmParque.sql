@@ -185,7 +185,6 @@ FROM PnTablas.Parque;
 GO
 
 --Borrado Fallido
-/*
 EXECUTE PnSPabm.bajaParque @parque = NULL;
 EXECUTE PnSPabm.bajaParque @parque = 6;
 EXECUTE PnSPabm.bajaParque @parque = 2;
@@ -193,7 +192,6 @@ EXECUTE PnSPabm.bajaParque @parque = 2;
 SELECT *
 FROM PnTablas.Parque;
 GO
-*/
 
 --Borrado Exitoso
 EXECUTE PnSPabm.bajaParque @parque = 3;
