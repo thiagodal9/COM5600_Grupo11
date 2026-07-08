@@ -1,0 +1,15 @@
+Para correr el proyecto Java, es necesario primero descargar el JDBC.
+
+Para este proyecto se utilizo la siguiente libreria oficial de Windows:
+https://learn.microsoft.com/es-es/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver17
+
+Y el JAR utilizado fue: mssql-jdbc-13.4.0.jre8.jar
+Para mas informacion, referirse al siguiente link oficial de Windows:
+https://learn.microsoft.com/es-es/sql/connect/jdbc/using-the-jdbc-driver?view=sql-server-ver17
+
+Para sumar la libreria al proyecto, se siguio el siguiente video:
+https://www.youtube.com/watch?v=2i4t-SL1VsU
+
+Para la creacion del codigo para obtener la conexion al servidor y realizar operaciones sobre la base de datos,
+se siguio el siguiente video:
+https://www.youtube.com/watch?v=vCfxZv-DMC0
