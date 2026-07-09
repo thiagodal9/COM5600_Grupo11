@@ -25,23 +25,22 @@ GO
 abm PagoVenta
 ================================================================
 */
---Alta(sin validaciones, los datos de entrada los da un SP superior)
+--Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaPagoVenta'))
-    DROP PROCEDURE PnSPabm.altaPagoVenta
+	DROP PROCEDURE PnSPabm.altaPagoVenta
 GO
 create procedure PnSPabm.altaPagoVenta
 @importe decimal(10,2),
 @fechaHora DATETIME,
-@item varchar(12),
-@metodo varchar(9),
-@moneda varchar(9)
+@item char(30),
+@metodo char(30)
 as
 begin
 	DECLARE @IDout TABLE(ID INT)
 
-	insert into PnTablas.PagoVenta(importe, FechaHoraTransaccion, item, metodo, moneda)
+	insert into PnTablas.PagoVenta(importe, FechaHoraTransaccion, item, metodo)
 	OUTPUT inserted.idPagoVenta INTO @IDout(ID)
-	values (@importe, @fechaHora, @item, @metodo, @moneda)
+	values (@importe, @fechaHora, @item, @metodo)
 
 	RETURN (SELECT ID FROM @IDout)
 end

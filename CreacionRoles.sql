@@ -203,7 +203,7 @@ go
 
 -- Ejecutar SPs de consulta con descifrado
 grant execute on PnSPabm.consultarPersona to pn_auditoria;
-grant execute on PnSPabm.consultarHistorial to pn_auditoria;
+grant execute on PnSPtrans.consultarHistorial to pn_auditoria;
 -- Acceso a la clave simetrica para poder descifrar dentro de los SPs
 grant control on symmetric key::SymKey_DatosSensibles to pn_auditoria;
 grant control on certificate::CertColumnas_Pn to pn_auditoria;
