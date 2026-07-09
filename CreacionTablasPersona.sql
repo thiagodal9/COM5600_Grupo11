@@ -38,7 +38,7 @@ BEGIN
 		NombrePersona varchar(20),
 		Apellido varchar(20),
 		Telefono varchar(12),
-		Rol varchar(10) NOT NULL CHECK (Rol IN ('Guardaparque', 'Guia'))
+		Rol varchar(12)
 	)
 	PRINT '--Creada Tabla: Persona--'
 END;
@@ -86,27 +86,23 @@ BEGIN
 	CREATE TABLE PnTablas.Especialidad
 	(
 		IDEspecialidad INT IDENTITY(1,1) PRIMARY KEY,
-		DescripcionEspecialidad varchar(20) NOT NULL UNIQUE
+		DescripcionEspecialidad varchar(20)
 	)
 	PRINT '--Creada Tabla: Especialidad--';
 END
 GO
 
 --Tabla Historial
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHistorial')
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Historial')
 BEGIN
-	CREATE TABLE PnTablas.TieneHistorial
+	CREATE TABLE PnTablas.Historial
 	(
 		IDregistro INT IDENTITY(1, 1) PRIMARY KEY,
-		Guardaparque INT NOT NULL,
-		Parque INT NOT NULL,
 		FechaInicio DATE,
 		FechaEgreso DATE,
-		RazonEgreso varchar(40),
-		FOREIGN KEY(Guardaparque) REFERENCES PnTablas.GuardaParque(IDGuardaParque),
-		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
+		RazonEgreso varchar(40)
 	)
-	PRINT '--Creada Tabla: TieneHistorial--';
+	PRINT '--Creada Tabla: Historial--';
 END;
 GO
 
@@ -125,5 +121,21 @@ BEGIN
 		PRIMARY KEY(Guia, Especialidad)
 	)
 	PRINT '--Creada Tabla: TieneEspecialidad--'
+END;
+GO
+
+--Tabla TieneHistorial
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHistorial')
+BEGIN
+	CREATE TABLE PnTablas.TieneHistorial
+	(
+		Parque INT,
+		Guardaparque INT,
+		Registro INT,
+		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
+		FOREIGN KEY (Guardaparque) REFERENCES PnTablas.Guardaparque(IDGuardaparque),
+		FOREIGN KEY (Registro) REFERENCES PnTablas.Historial(IDregistro),
+	)
+	PRINT '--Creada Tabla: TieneHistorial--';
 END;
 GO
