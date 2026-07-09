@@ -1,14 +1,10 @@
 ----CAMBIOS
 ----------------------------------------------------------------------------------------
---Leandro
-*Revision/Correccion/Finalizacion de script de testing para SPabm de tablas Actividad
-\Se corrigio el codigo en varios SP y en la creacion de algunas tablas
-\\Se sumaron los datos de entrada para pruebas al script de Dataset_testing
-
-*Agregado de SPs para limpieza de registros para tablas PagoVenta/TieneHActividad
-
-*Se hizo una modificacion menor al codigo de la app
-
-*Se agrego un app.txt al branch app con informacion acerca de como correr el proyecto 
-\y la creacion del codigo
+--Maximo
+Se añadieron los bloques para la inserción de los 20 Guias, 20 Guardaparques y 10 Concesiones,
+Se actualizaron los parámetros de llamada para coincidir con las firmas corregidas en CreacionSPabmActividad.sql.
+Sustitución de IDs fijos por búsqueda dinámica. Se eliminó la dependencia de IDs numéricos estáticos como 1 o 2.
+Se añadió un control lógico que verifica si los IDs fueron encontrados antes de intentar la inserción.
+Se eliminó cualquier inserción directa a tablas de transacciones.
+Correciones menores de nombres incorrectos y de sintaxis.
 ----------------------------------------------------------------------------------------
