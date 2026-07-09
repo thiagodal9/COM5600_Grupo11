@@ -32,7 +32,7 @@ create procedure PnSPabm.altaPersona
 @nombre varchar(20),
 @apellido varchar(20),
 @telefono char(12),
-@rol varchar(10)
+@rol varchar(12)
 as
 begin
     DECLARE @errorCount INT
@@ -42,13 +42,31 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
-    IF ( (@dni <= 0) OR (99999999 < @dni) )
+    IF( (@dni IS NULL) OR ((@dni <= 0) OR (99999999 < @dni)) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    IF ( (@rol NOT LIKE 'Guardaparque') AND (@rol NOT LIKE 'Guia') )
+    IF(@nombre IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Nombre invalido.'
+    END
+
+    IF(@apellido IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Apellido invalido.'
+    END
+
+    IF(@telefono IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Telefono invalido.'
+    END
+
+    IF( (@rol IS NULL) OR (@rol NOT IN('Guardaparque', 'Guia')) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -93,13 +111,19 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
-    if ( (@rolNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
+    IF( (@IDPersona IS NULL) AND (@IDPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    if ( (@dniNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    if ( (@rolNuevo IS NOT NULL) AND ( (@rolNuevo NOT LIKE 'Guardaparque') AND (@rolNuevo NOT LIKE 'Guia') ) )
+    IF( (@rolNuevo IS NOT NULL) AND (@rolNuevo NOT IN ('Guardaparque', 'Guia')) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -168,25 +192,32 @@ begin
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
 
-    --controlExistencia
-    if ( NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    --controlValidez
+    IF( (@IDPersona IS NULL) OR (@IDPersona <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- La persona no existe.'
+        PRINT 'ERROR: Persona invalida.'
+    END
+
+    --controlExistencia
+    if ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        PRINT 'ERROR: La persona no existe.'
     END
 
     --controlReferencias
     if ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona AND Rol NOT LIKE 'Guardaparque') )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene un rol diferente asignado.'
+        PRINT 'ERROR: La persona tiene un rol diferente asignado.'
     END
 
     --controlDuplicidad
     if ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque ya presente.'
+        PRINT 'ERROR: Guardaparque ya presente.'
     END
 
     IF(@errorCount = 0)
@@ -204,60 +235,48 @@ GO
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 ----Historial
---No hacen falta validaciones porque los datos los provee una SP superior
---altaHistorial
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaHistorial'))
-    DROP PROCEDURE PnSPabm.altaHistorial
-GO
-CREATE PROCEDURE PnSPabm.altaHistorial (@Guardaparque INT, @parque INT, @fechaIni DATE, @fechaFin DATE, @razon varchar(40))
-AS
-BEGIN
-    IF( EXISTS(
-        SELECT 1 FROM PnTablas.TieneHistorial 
-        WHERE Guardaparque = @Guardaparque AND FechaInicio = @fechaIni) )
-        PRINT 'ERROR: registro ya presente.'
-    ELSE
-    BEGIN
-        INSERT INTO PnTablas.TieneHistorial (Guardaparque, Parque, FechaInicio, FechaEgreso, RazonEgreso)
-        VALUES (@Guardaparque, @parque, @fechaIni, @fechaFin, @razon)
-    END
-END;
-GO
-PRINT '--Creado SP: altaHistorial--';
-GO
-
--------------------------------------------------------------------------------------
 --modificacionRazonHistorial
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionRazonHistorial'))
     DROP PROCEDURE PnSPabm.modificacionRazonHistorial
 GO
-CREATE PROCEDURE PnSPabm.modificacionRazonHistorial (@Guardaparque INT, @parque INT, @fechaFin DATE, @razonNEW varchar(40))
+CREATE PROCEDURE PnSPabm.modificacionRazonHistorial (@registro INT, @razonNEW varchar(40))
 AS
 BEGIN
-    UPDATE PnTablas.TieneHistorial
-    SET RazonEgreso = @razonNEW
-    WHERE Guardaparque = @Guardaparque 
-        AND Parque = @parque 
-        AND FechaInicio = @fechaFin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    IF( (@registro IS NULL) OR (@registro <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Registro invalido.'
+    END
+
+    IF(@razonNEW IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Razon invalida.'
+    END
+
+    IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Historial WHERE IDregistro = @registro) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Registro inexistente.'
+    END
+
+    IF(@errorCount = 0)
+    BEGIN
+        UPDATE PnTablas.Historial
+        SET RazonEgreso = @razonNEW
+        WHERE IDregistro = @registro
+    END
+    ELSE
+        PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: modificacionRazonHistorial--';
-GO
-
--------------------------------------------------------------------------------------
---bajaHistorial
---baja de todo el historial de un Guardaparque
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaHistorial'))
-    DROP PROCEDURE PnSPabm.bajaHistorial
-GO
-CREATE PROCEDURE PnSPabm.bajaHistorial (@Guardaparque INT)
-AS
-BEGIN
-    DELETE FROM PnTablas.TieneHistorial
-    WHERE Guardaparque = @Guardaparque
-END;
-GO
-PRINT '--Creado SP: bajaHistorial--';
 GO
 
 -------------------------------------------------------------------------------------
@@ -281,16 +300,22 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
-    IF(@numeroHabilitacion <= 0)
+    IF( (@idPersona IS NULL) OR (@idPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    IF( (@numeroHabilitacion IS NULL) OR (@numeroHabilitacion <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- Numero de habilitacion invalido.'
     END
 
-    IF( @vencimientoHabilitacion <= cast(getdate() as date) )
+    IF( (@vencimientoHabilitacion IS NULL) OR (@vencimientoHabilitacion <= cast(getdate() as date)) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion vencida.'
+        SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion invalida.'
     END
 
     --controlExistencia
@@ -339,15 +364,27 @@ begin
 
     SET @errorCount = 0
 
-    if not exists (select 1 from PnTablas.Guia where IDGuia = @idPersona)
+    IF( (@idPersona IS NULL) OR (@idPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        PRINT 'ERROR: Persona invalida.'
+    END
+
+    if( (@errorCount = 0) AND not exists(select 1 from PnTablas.Guia where IDGuia = @idPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
         PRINT 'El idPersona no es de ningun guia registrado.'
     END
+
+    if ( (@errorCount = 0) AND exists (select 1 from PnTablas.HorarioActividad where Guia = @idPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        PRINT 'El guia tiene actividades asignadas. Desasigne al guia antes de proceder.'
+    END
     
     IF(@errorCount = 0)
     BEGIN
-        EXECUTE PnSPabm.desasignarEspecialidades @guia = @idPersona
+        EXECUTE desasignarEspecialidades @guia = @idPersona
 
         delete from PnTablas.Guia
         where IDGuia = @idPersona;
@@ -376,6 +413,12 @@ begin
     SET @errorLine = 'Error/es:'
 
     --controlValidezDatos
+    IF( (@idPersona IS NULL) OR (@idPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
     IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@numeroHabilitacionNuevo <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
