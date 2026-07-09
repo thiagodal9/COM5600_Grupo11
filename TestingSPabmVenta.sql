@@ -36,9 +36,9 @@ GO
 
 DECLARE @pago1 INT, @pago2 INT, @pago3 INT;
 
-EXECUTE @pago1 = PnSPabm.altaPagoVenta @importe = 1500.00, @fechaHora = '2026-07-01T10:00:00', @item = 'Entradas',    @metodo = 'Efectivo';
-EXECUTE @pago2 = PnSPabm.altaPagoVenta @importe = 900.00,  @fechaHora = '2026-07-01T11:30:00', @item = 'Actividades', @metodo = 'Tarjeta';
-EXECUTE @pago3 = PnSPabm.altaPagoVenta @importe = 300.00,  @fechaHora = '2026-07-01T12:15:00', @item = 'Entradas',    @metodo = 'Efectivo';
+EXECUTE @pago1 = PnSPabm.altaPagoVenta @importe = 1500.00, @fechaHora = '2026-07-01T10:00:00', @item = 'Entradas',    @metodo = 'Efectivo', @moneda = 'Dolar';
+EXECUTE @pago2 = PnSPabm.altaPagoVenta @importe = 900.00,  @fechaHora = '2026-07-01T11:30:00', @item = 'Actividades', @metodo = 'Tarjeta', @moneda = 'Peso';
+EXECUTE @pago3 = PnSPabm.altaPagoVenta @importe = 300.00,  @fechaHora = '2026-07-01T12:15:00', @item = 'Entradas',    @metodo = 'Efectivo', @moneda = 'Peso';
 
 PRINT CONCAT('IDs generados: ', @pago1, ', ', @pago2, ', ', @pago3);
 GO
