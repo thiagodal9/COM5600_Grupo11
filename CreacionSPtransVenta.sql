@@ -75,7 +75,6 @@ go
 Compra de Entradas
 ================================================================
 */
--------------------------------------------------------------------------------------
 --apilar compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarEntradas'))
     DROP PROCEDURE PnSPabm.reservarEntradas
@@ -85,36 +84,36 @@ AS
 BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
- 
+
 	SET @errorCount = 0
 	SET @errorLine = 'Error/es:'
- 
+
 	--controlValidez
 	IF( (@entrada IS NULL) OR (@entrada <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Tipo de entrada invalida.'
 	END
- 
+
 	IF( (@cantidad IS NULL) OR (@cantidad <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Cantidad invalida.'
 	END
- 
+
 	IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
 	END
- 
+
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE IDTipoEntrada = @entrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
- 
+
 	IF(@errorCount = 0)
 	BEGIN
 		IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
@@ -127,6 +126,7 @@ BEGIN
 END;
 GO
 
+-------------------------------------------------------------------------------------
 --retroceder compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.cancelarReservaEntradas'))
     DROP PROCEDURE PnSPabm.cancelarReservaEntradas
@@ -138,27 +138,38 @@ BEGIN
 END;
 GO
 
+-------------------------------------------------------------------------------------
 --confirmar compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraE'))
     DROP PROCEDURE PnSPtrans.confirmarCompraE
 GO
-CREATE PROCEDURE PnSPtrans.confirmarCompraE @metodo varchar(9)
+CREATE PROCEDURE PnSPtrans.confirmarCompraE @metodo varchar(9), @moneda varchar(5)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	DECLARE @total DECIMAL(10, 2)
 	DECLARE @fechaHoraT DATETIME
 	DECLARE @id INT
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
+	--controlValidez
 	IF( (@metodo IS NULL) OR (@metodo NOT IN ('Efectivo', 'Tarjeta')) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Metodo de pago invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Metodo de pago invalido.'
 	END
 
+	IF( (@moneda IS NULL) OR (@moneda NOT IN ('Peso', 'Dolar')) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Moneda invalida.'
+	END
+
+	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM #ventaEntradas) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
@@ -169,7 +180,6 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
-			
 			SET @total = (SELECT SUM(t.subTotal)
 						 FROM
 						 (
@@ -185,13 +195,21 @@ BEGIN
 							ON (tE.Entrada = E.IDEntrada)
 						 ) AS t)
 
+			IF(@moneda LIKE 'Dolar')
+			BEGIN
+				--conversion del total a moneda
+			END
+
+			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
+
 			SET @fechaHoraT = GETDATE()
 
 			EXECUTE @id = PnSPabm.altaPagoVenta
 							@importe = @total,
 							@fechaHora = @fechaHoraT,
 							@item = 'Entradas',
-							@metodo = @metodo
+							@metodo = @metodo,
+							@moneda = @moneda
 
 			UPDATE #ventaEntradas
 			SET ID = @id
@@ -227,7 +245,6 @@ GO
 Venta de Actividades
 ================================================================
 */
--------------------------------------------------------------------------------------
 --apilar compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarActividad'))
     DROP PROCEDURE PnSPabm.reservarActividad
@@ -310,34 +327,43 @@ GO
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraA'))
     DROP PROCEDURE PnSPtrans.confirmarCompraA
 GO
-CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9)
+CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9), @moneda varchar(5)
 AS
 BEGIN
 	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
 
 	DECLARE @total DECIMAL(10, 2)
 	DECLARE @fechaHoraT DATETIME
 	DECLARE @id INT
 
 	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
 
+	--controlValidez
 	IF( (@metodo IS NULL) OR (@metodo NOT IN ('Efectivo', 'Tarjeta')) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: Metodo de pago invalido.'
+		SET @errorLine = @errorLine + CHAR(13) + '- Metodo de pago invalido.'
 	END
 
+	IF( (@moneda IS NULL) OR (@moneda NOT IN ('Peso', 'Dolar')) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Moneda invalida.'
+	END
+
+	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM #ventaActividades) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		PRINT 'ERROR: No hay reservas hechas.'
+		SET @errorLine = @errorLine + CHAR(13) + '- No hay reservas hechas.'
 	END
 
 	IF(@errorCount = 0)
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
-			
 			IF EXISTS(
 			SELECT 1
 			FROM
@@ -389,13 +415,21 @@ BEGIN
 							ON (tL.Actividad = CAct.IDActividad)
 						) AS t)
 
+			IF(@moneda LIKE 'Dolar')
+			BEGIN
+				--conversion de moneda
+			END
+
+			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
+
 			SET @fechaHoraT = GETDATE()
 
 			EXECUTE @id = PnSPabm.altaPagoVenta
 							@importe = @total,
 							@fechaHora = @fechaHoraT,
 							@item = 'Actividades',
-							@metodo = @metodo
+							@metodo = @metodo,
+							@moneda = @moneda
 
 			UPDATE #ventaActividades
 			SET ID = @id

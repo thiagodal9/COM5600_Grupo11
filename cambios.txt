@@ -33,3 +33,11 @@ Correciones menores de nombres incorrectos y de sintaxis.
 
 *Ajustes generales en varios SP
 ----------------------------------------------------------------------------------------
+--Leandro
+*Correcciones menores en script CreacionSPabmConcesion/CreacionSPtransConcesion
+\Se movieron los SP con operaciones de transaccion en SPabmConcesion de vuelta a CreacionSPtransConcesion
+
+*Se ajusto la tabla PagoVenta para acomodar el campo Moneda y asi incluir la funcionalidad de uso de APIs.
+\Se ajustaron SPs afectados para incluir dicha funcionalidad y se dejo comentado el lugar para realizar la ejecucion
+\de los SP que corresponden a las API
+\\Se hicieron algunos cambios menores de campos
