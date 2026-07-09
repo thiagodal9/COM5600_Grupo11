@@ -45,6 +45,101 @@ begin
 	RETURN (SELECT ID FROM @IDout)
 end
 go
+PRINT '--Creado SP: altaPagoVenta--';
+GO
+
+--Baja (para limpieza de registros segun sea necesario)
+--BajaOne
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaPagoVentaOne'))
+    DROP PROCEDURE PnSPabm.bajaPagoVentaOne
+GO
+CREATE PROCEDURE PnSPabm.bajaPagoVentaOne (@pago INT)
+AS
+BEGIN
+	DECLARE @errorCount INT
+
+	SET @errorCount = 0
+
+	IF( (@pago IS NULL) OR (@pago <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Pago invalido.'
+	END
+
+	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.PagoVenta WHERE IDPagoVenta = @pago) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Pago inexistente.'
+	END
+
+	IF
+	((@errorCount = 0)
+	OR EXISTS(SELECT 1 FROM PnTablas.TieneHActividad WHERE Pago = @pago)
+	OR EXISTS(SELECT 1 FROM PnTablas.PoseeEntrada WHERE Pago = @pago))
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 
+		'ERROR: Existe al menos un registro asociado a ese pago para la venta de una entrada/actividad. 
+				Elimine dicho registro para continuar.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		DELETE FROM PnTablas.PagoVenta
+		WHERE IDPagoVenta = @pago
+	END
+END;
+GO
+PRINT '--Creado SP: bajaPagoVentaOne--';
+GO
+
+--BajaMany
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaPagoVentaMany'))
+    DROP PROCEDURE PnSPabm.bajaPagoVentaMany
+GO
+CREATE PROCEDURE PnSPabm.bajaPagoVentaMany (@fecha DATE)
+AS
+BEGIN
+	DECLARE @errorCount INT
+
+	SET @errorCount = 0
+
+	IF( (@fecha IS NULL) OR (@fecha >= CONVERT(DATE, GETDATE())) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Fecha invalida.'
+	END
+
+	IF
+	((@errorCount = 0)
+	AND
+	(
+		EXISTS(
+		SELECT 1
+		FROM PnTablas.TieneHActividad
+		WHERE Pago IN (SELECT IDPagoVenta FROM PnTablas.PagoVenta WHERE FechaHoraTransaccion <= @fecha))
+		OR
+		EXISTS(
+		SELECT 1
+		FROM PnTablas.PoseeEntrada
+		WHERE Pago IN (SELECT IDPagoVenta FROM PnTablas.PagoVenta WHERE FechaHoraTransaccion <= @fecha))
+	))
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 
+		'ERROR: Existe al menos un registro asociado a algun pago para la venta de una entrada/actividad. 
+				Elimine dicho registro para continuar.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		DELETE FROM PnTablas.PagoVenta
+		WHERE CONVERT(DATE, FechaHoraTransaccion) <= @fecha
+	END
+END;
+GO
+PRINT '--Creado SP: bajaPagoVentaMany--';
+GO
 
 /*
 ================================================================
@@ -65,6 +160,8 @@ begin
 	values (@Entrada, @Cantidad, @FechaAcceso)
 end
 go
+PRINT '--Creado SP: altaVentaEntradas--';
+GO
 
 -------------------------------------------------------------------------------------
 --Modificacion
@@ -82,6 +179,8 @@ BEGIN
 	WHERE Entrada = @entrada AND FechaAcceso = @fechaAcceso
 END;
 GO
+PRINT '--Creado SP: modificarVentaEntradas--';
+GO
 
 -------------------------------------------------------------------------------------
 --Baja
@@ -93,6 +192,8 @@ AS
 BEGIN
 	TRUNCATE TABLE #ventaEntradas
 END;
+GO
+PRINT '--Creado SP: bajaAllVentaEntradas--';
 GO
 
 /*
@@ -115,6 +216,8 @@ begin
 	values (@Actividad, @HoraInicio, @FechaActividad, @Cantidad)
 end
 go
+PRINT '--Creado SP: altaVentaActividades--';
+GO
 
 -------------------------------------------------------------------------------------
 --Modificacion
@@ -133,6 +236,8 @@ BEGIN
 	WHERE Actividad = @actividad AND FechaActividad = @fechaActividad AND HoraInicio = @horaInicio
 END;
 GO
+PRINT '--Creado SP: modificarVentaActividades--';
+GO
 
 -------------------------------------------------------------------------------------
 --Baja
@@ -144,4 +249,130 @@ AS
 BEGIN
 	TRUNCATE TABLE #ventaActividades
 END;
+GO
+PRINT '--Creado SP: bajaAllVentaActividades--';
+GO
+
+/*
+================================================================
+abm tieneHActividad
+================================================================
+*/
+--Alta: solo registra un SP superior y no se permite por fuera del proceso de compra.
+
+--Baja: se permite hacer baja con el fin de limpiar registros cuando sea necesario.
+--Baja(One)
+--No se permite borrar registros donde la fecha 
+--sea de una actividad que aun no se ha realizado (se incluye el dia actual)
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTHActividadOne'))
+    DROP PROCEDURE PnSPabm.bajaTHActividadOne
+GO
+CREATE PROCEDURE PnSPabm.bajaTHActividadOne
+@pago INT,
+@actividad INT,
+@fechaActividad DATE,
+@horaInicio TIME
+AS
+BEGIN
+	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
+
+	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
+
+	--controlValidez
+	IF( (@pago IS NULL) OR (@pago <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Pago invalido.'
+	END
+
+	IF( (@actividad IS NULL) OR (@actividad <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Actividad invalida.'
+	END
+
+	IF( (@fechaActividad IS NULL) OR (@fechaActividad >= CONVERT(DATE, GETDATE())) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
+	END
+
+	IF(@horaInicio IS NULL)
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Hora invalida.'
+	END
+
+	--controlExistencia
+	IF
+	((@errorCount = 0) 
+	AND 
+	NOT EXISTS
+	(
+		SELECT 1 
+		FROM PnTablas.TieneHActividad 
+		WHERE 
+		Pago = @pago 
+		AND 
+		Actividad = @actividad 
+		AND 
+		FechaActividad = @fechaActividad
+		AND
+		HoraInicio = @horaInicio
+	))
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Registro inexistente.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		DELETE FROM PnTablas.TieneHActividad
+		WHERE
+		Pago = @pago 
+		AND 
+		Actividad = @actividad 
+		AND 
+		FechaActividad = @fechaActividad
+		AND
+		HoraInicio = @horaInicio
+	END
+	ELSE
+		PRINT @errorLine
+END;
+GO
+PRINT '--Creado SP: bajaTHActividadOne--';
+GO
+
+--Baja(Many)
+--para limpiar registros que preceden a una
+--determinada fecha de uno o mas pagos
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTHActividadMany'))
+    DROP PROCEDURE PnSPabm.bajaTHActividadMany
+GO
+CREATE PROCEDURE PnSPabm.bajaTHActividadMany
+@fecha DATE
+AS
+BEGIN
+	DECLARE @errorCount INT
+
+	SET @errorCount = 0
+
+	IF( (@fecha IS NULL) OR (@fecha >= CONVERT(DATE, GETDATE())) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Fecha invalida.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		DELETE FROM PnTablas.TieneHActividad
+		WHERE Pago IN
+		(SELECT IDPagoVenta FROM PnTablas.PagoVenta WHERE CONVERT(DATE, FechaHoraTransaccion) <= @fecha)
+	END
+END;
+GO
+PRINT '--Creado SP: bajaTHActividadMany--';
 GO

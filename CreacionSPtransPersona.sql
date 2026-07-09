@@ -21,69 +21,96 @@ PRINT '--Creando SPtrans para tablas Persona...--';
 GO
 
 -------------------------------------------------------------------------------------
---Persona
 -------------------------------------------------------------------------------------
---Baja
---Este SP solo borra si no hay dependencias.
---De haberlas, primero se pide quitar las dependencias con los SP correspondientes.
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.bajaPersona'))
-    DROP PROCEDURE PnSPtrans.bajaPersona
+----Historial
+--altaHistorial
+--No hacen falta validaciones porque los datos los provee una SP superior
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.altaHistorial'))
+    DROP PROCEDURE PnSPtrans.altaHistorial
 GO
-create procedure PnSPtrans.bajaPersona
-@IDPersona int,
-@razon varchar(40)
-as
-begin
+CREATE PROCEDURE PnSPtrans.altaHistorial (@Guardaparque INT, @parque INT, @fechaIni DATE, @fechaFin DATE, @razon varchar(40))
+AS
+BEGIN
+    DECLARE @IDout TABLE(ID INT)
+
+    BEGIN TRANSACTION
+    BEGIN TRY
+        INSERT INTO PnTablas.Historial (FechaInicio, FechaEgreso, RazonEgreso)
+        OUTPUT inserted.IDregistro INTO @IDout(ID)
+        VALUES (@fechaIni, @fechaFin, @razon)
+
+        INSERT INTO PnTablas.TieneHistorial (Parque, Guardaparque, Registro)
+        VALUES (@parque, @Guardaparque, (SELECT ID FROM @IDout))
+
+        COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        DECLARE @Msg NVARCHAR(500) = ERROR_MESSAGE();
+        DECLARE @Num INT           = ERROR_NUMBER();
+        PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
+    END CATCH
+END;
+GO
+PRINT '--Creado SP: altaHistorial--';
+GO
+
+--bajaHistorial
+--baja de todo el historial de un Guardaparque
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.bajaHistorial'))
+    DROP PROCEDURE PnSPtrans.bajaHistorial
+GO
+CREATE PROCEDURE PnSPtrans.bajaHistorial (@Guardaparque INT)
+AS
+BEGIN
     DECLARE @errorCount INT
-    DECLARE @errorLine varchar(100)
+    DECLARE @IDregistros TABLE(ID INT)
 
     SET @errorCount = 0
-    SET @errorLine = 'Error/es:'
 
-    --controlExistencia
-    if ( NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    IF( (@Guardaparque IS NULL) OR (@Guardaparque <= 0) )
     BEGIN
         SET @errorCount = @errorCount + 1
-        SET @errorLine = @errorLine + CHAR(13) + '- La persona no existe.'
+        PRINT 'ERROR: Guardaparque invalido.'
     END
 
-    --controlReferencias
-    IF (@errorCount = 0)
+    IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.GuardaParque WHERE IDGuardaParque = @Guardaparque) )
     BEGIN
-        IF ( EXISTS(select 1 from PnTablas.GuardaParque where IDGuardaParque = @idPersona and estado = 'Activo') )
-        BEGIN
-            SET @errorCount = @errorCount + 1
-	        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene asignaciones de guardaparque activas, debe darlas de baja primero.'
-        END
+        SET @errorCount = @errorCount + 1
+        PRINT 'ERROR: Guardaparque inexistente.'
     END
-    
+
     IF(@errorCount = 0)
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
-            EXECUTE PnSPabm.bajaGuia @idPersona = @IDPersona
+            INSERT INTO @IDregistros
+            SELECT Registro
+            FROM PnTablas.TieneHistorial
+            WHERE Guardaparque = @Guardaparque
 
-            EXECUTE PnSPabm.bajaGuardaparque @IDPersona = @IDPersona, @razon = @razon
+            DELETE FROM PnTablas.TieneHistorial
+            WHERE Guardaparque = @Guardaparque 
 
-            delete from PnTablas.Persona 
-            where idPersona = @idPersona
+            DELETE FROM PnTablas.Historial
+            WHERE IDregistro IN (SELECT ID FROM @IDregistros)
 
             COMMIT TRANSACTION
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0
-            ROLLBACK TRANSACTION;
+                ROLLBACK TRANSACTION;
 
             DECLARE @Msg NVARCHAR(500) = ERROR_MESSAGE();
             DECLARE @Num INT           = ERROR_NUMBER();
             PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
         END CATCH
     END
-    ELSE
-        PRINT @errorLine
-end;
-go
-PRINT '--Creado SP: bajaPersona--';
+END;
+GO
+PRINT '--Creado SP: bajaHistorial--';
 GO
 
 -------------------------------------------------------------------------------------
@@ -324,8 +351,21 @@ BEGIN
     SET @errorCount = 0
     SET @errorLine = 'Error/es:'
 
+    --controlValidez
+    IF( (@IDPersona IS NULL) OR (@IDPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    IF(@razon IS NULL)
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Razon invalida.'
+    END
+
     --controlExistencia
-    IF( NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
+    IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaparque = @IDPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- Guardaparque inexistente.'
@@ -360,7 +400,6 @@ BEGIN
     END
     ELSE
         PRINT @errorLine
-
 END;
 GO
 PRINT '--Creado SP: bajaGuardaparque--';
@@ -555,4 +594,76 @@ BEGIN
 END;
 GO
 PRINT '--Creado SP: desasignarGuia--';
+GO
+
+-------------------------------------------------------------------------------------
+--Persona
+-------------------------------------------------------------------------------------
+--Baja
+--Este SP solo borra si no hay dependencias.
+--De haberlas, primero se pide quitar las dependencias con los SP correspondientes.
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.bajaPersona'))
+    DROP PROCEDURE PnSPtrans.bajaPersona
+GO
+create procedure PnSPtrans.bajaPersona
+@IDPersona int,
+@razon varchar(40)
+as
+begin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    --controlExistencia
+    if ( NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- La persona no existe.'
+    END
+
+    --controlReferencias
+    IF (@errorCount = 0)
+    BEGIN
+        IF ( EXISTS(select 1 from PnTablas.GuardaParque where IDGuardaParque = @idPersona and estado = 'Activo') )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+	        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene asignaciones de guardaparque activas, debe darlas de baja primero.'
+        END
+
+        IF ( EXISTS(select 1 from PnTablas.HorarioActividad where Guia = @idPersona) )
+        BEGIN
+            SET @errorCount = @errorCount + 1
+	        SET @errorLine = @errorLine + CHAR(13) + '- La persona tiene asignaciones de guia activas, debe darlas de baja primero.'
+        END
+    END
+    
+    IF(@errorCount = 0)
+    BEGIN
+        BEGIN TRANSACTION
+        BEGIN TRY
+            EXECUTE PnSPabm.bajaGuia @idPersona = @IDPersona
+
+            EXECUTE PnSPtrans.bajaGuardaparque @IDPersona = @IDPersona, @razon = @razon
+
+            delete from PnTablas.Persona 
+            where idPersona = @idPersona
+
+            COMMIT TRANSACTION
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+            DECLARE @Msg NVARCHAR(500) = ERROR_MESSAGE();
+            DECLARE @Num INT           = ERROR_NUMBER();
+            PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
+        END CATCH
+    END
+    ELSE
+        PRINT @errorLine
+end;
+go
+PRINT '--Creado SP: bajaPersona--';
 GO
