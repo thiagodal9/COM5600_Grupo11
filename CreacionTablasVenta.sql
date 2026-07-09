@@ -34,8 +34,9 @@ BEGIN
 		IDPagoVenta INT IDENTITY(1,1) PRIMARY KEY,
 		Importe DECIMAL(10,2),
 		FechaHoraTransaccion DATE,
-		Item char(30),
-		Metodo char(30)
+		Item varchar(12),
+		Metodo varchar(9),
+		Moneda varchar(9)
 	)
 	PRINT '--Creada Tabla: PagoVenta--'
 END;
