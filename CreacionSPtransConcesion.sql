@@ -103,15 +103,13 @@ CREATE PROCEDURE PnSPtrans.bajaFacturaConcesionMany
 AS
 BEGIN
 	DECLARE @errorCount INT
-	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
-	SET @errorLine = 'Error/es:'
 
 	IF(@fecha IS NULL)
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		SET @errorLine = @errorLine + CHAR(13) + '- Vencimiento invalido.'
+		PRINT 'ERROR: Vencimiento invalido.'
 	END
 
 	IF(@errorCount = 0)
@@ -132,8 +130,6 @@ BEGIN
 			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
 		END CATCH
 	END
-	ELSE
-		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: bajaFacturaConcesionMany--';
@@ -149,23 +145,21 @@ CREATE PROCEDURE PnSPtrans.pagoFactura
 AS
 BEGIN
 	DECLARE @errorCount INT
-	DECLARE @errorLine varchar(100)
 
 	SET @errorCount = 0
-	SET @errorLine = 'Error/es:'
 
 	--controlValidez
 	IF( (@idFactura IS NULL) OR (@idFactura <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		SET @errorLine = @errorLine + CHAR(13) + '- Factura invalida.'
+		PRINT 'ERROR: Factura invalida.'
 	END
 
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.HistorialPago WHERE IDPagoConcesion = @idFactura) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
-		SET @errorLine = @errorLine + CHAR(13) + '- Factura inexistente.'
+		PRINT 'ERROR: Factura inexistente.'
 	END
 
 	IF(@errorCount = 0)
@@ -190,8 +184,6 @@ BEGIN
 			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
 		END CATCH
 	END
-	ELSE 
-		PRINT @errorLine
 END;
 GO
 PRINT '--Creado SP: pagoFactura--';
