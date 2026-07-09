@@ -84,36 +84,36 @@ AS
 BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
- 
+
 	SET @errorCount = 0
 	SET @errorLine = 'Error/es:'
- 
+
 	--controlValidez
 	IF( (@entrada IS NULL) OR (@entrada <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Tipo de entrada invalida.'
 	END
- 
+
 	IF( (@cantidad IS NULL) OR (@cantidad <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Cantidad invalida.'
 	END
- 
+
 	IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
 	END
- 
+
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE IDTipoEntrada = @entrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
- 
+
 	IF(@errorCount = 0)
 	BEGIN
 		IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
@@ -125,6 +125,7 @@ BEGIN
 		PRINT @errorLine
 END;
 GO
+
 -------------------------------------------------------------------------------------
 --retroceder compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.cancelarReservaEntradas'))
@@ -198,6 +199,8 @@ BEGIN
 			BEGIN
 				--conversion del total a moneda
 			END
+
+			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
 
 			SET @fechaHoraT = GETDATE()
 
@@ -324,7 +327,7 @@ GO
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraA'))
     DROP PROCEDURE PnSPtrans.confirmarCompraA
 GO
-CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9)
+CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9), @moneda varchar(5)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -416,6 +419,8 @@ BEGIN
 			BEGIN
 				--conversion de moneda
 			END
+
+			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
 
 			SET @fechaHoraT = GETDATE()
 
