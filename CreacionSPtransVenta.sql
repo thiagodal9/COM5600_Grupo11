@@ -26,6 +26,9 @@ abm PagoVenta
 ================================================================
 */
 --Baja
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaVenta'))
+    DROP PROCEDURE PnSPabm.bajaVenta
+GO
 create procedure PnSPabm.bajaVenta
 @idPagoVenta int
 as
@@ -74,47 +77,50 @@ Compra de Entradas
 */
 -------------------------------------------------------------------------------------
 --apilar compra
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarEntradas'))
+    DROP PROCEDURE PnSPabm.reservarEntradas
+GO
 CREATE PROCEDURE PnSPabm.reservarEntradas (@entrada INT, @cantidad INT, @fecha DATE)
 AS
 BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
-
+ 
 	SET @errorCount = 0
 	SET @errorLine = 'Error/es:'
-
+ 
 	--controlValidez
 	IF( (@entrada IS NULL) OR (@entrada <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Tipo de entrada invalida.'
 	END
-
+ 
 	IF( (@cantidad IS NULL) OR (@cantidad <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Cantidad invalida.'
 	END
-
+ 
 	IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
 	END
-
+ 
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE IDTipoEntrada = @entrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
-
+ 
 	IF(@errorCount = 0)
 	BEGIN
 		IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
-			EXECUTE PnSPabm.modificarVentaEntradas @entrada = @entrada, @cantidadNew = @cantidad, @fechaAcceso = @fecha
+			EXECUTE PnSPabm.modificarVentaEntradas @entrada = @entrada, @cantidadNEW = @cantidad, @fechaAcceso = @fecha
 		ELSE
-			EXECUTE PnSPabm.altaVentaEntradas @entrada = @entrada, @cantidadNew = @cantidad, @fechaAcceso = @fecha
+			EXECUTE PnSPabm.altaVentaEntradas @Entrada = @entrada, @Cantidad = @cantidad, @FechaAcceso = @fecha
 	END
 	ELSE
 		PRINT @errorLine
@@ -122,6 +128,9 @@ END;
 GO
 
 --retroceder compra
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.cancelarReservaEntradas'))
+    DROP PROCEDURE PnSPabm.cancelarReservaEntradas
+GO
 CREATE PROCEDURE PnSPabm.cancelarReservaEntradas
 AS
 BEGIN
@@ -130,6 +139,9 @@ END;
 GO
 
 --confirmar compra
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraE'))
+    DROP PROCEDURE PnSPtrans.confirmarCompraE
+GO
 CREATE PROCEDURE PnSPtrans.confirmarCompraE @metodo varchar(9)
 AS
 BEGIN
@@ -217,6 +229,9 @@ Venta de Actividades
 */
 -------------------------------------------------------------------------------------
 --apilar compra
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarActividad'))
+    DROP PROCEDURE PnSPabm.reservarActividad
+GO
 CREATE PROCEDURE PnSPabm.reservarActividad (@actividad INT, @cantidad INT, @fecha DATE, @hora TIME)
 AS
 BEGIN
@@ -280,6 +295,9 @@ GO
 
 -------------------------------------------------------------------------------------
 --retroceder reserva
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.cancelarReservaActividades'))
+    DROP PROCEDURE PnSPabm.cancelarReservaActividades
+GO
 CREATE PROCEDURE PnSPabm.cancelarReservaActividades
 AS
 BEGIN
@@ -289,6 +307,9 @@ GO
 
 -------------------------------------------------------------------------------------
 --confirmar compra
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraA'))
+    DROP PROCEDURE PnSPtrans.confirmarCompraA
+GO
 CREATE PROCEDURE PnSPtrans.confirmarCompraA @metodo varchar(9)
 AS
 BEGIN

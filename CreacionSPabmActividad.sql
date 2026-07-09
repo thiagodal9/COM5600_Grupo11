@@ -779,3 +779,64 @@ END;
 GO
 PRINT '--Creado SP: bajaHActividadAll--';
 GO
+
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaTHActividadOne'))
+    DROP PROCEDURE PnSPabm.bajaTHActividadOne
+GO
+CREATE PROCEDURE PnSPabm.bajaTHActividadOne (@pago INT, @actividad INT, @fechaActividad DATE, @horaInicio TIME)
+AS
+BEGIN
+	DECLARE @errorCount INT
+	DECLARE @errorLine varchar(100)
+ 
+	SET @errorCount = 0
+	SET @errorLine = 'Error/es:'
+ 
+	--controlValidez
+	IF( (@pago IS NULL) OR (@pago <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Pago invalido.'
+	END
+ 
+	IF( (@actividad IS NULL) OR (@actividad <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Actividad invalida.'
+	END
+ 
+	IF(@fechaActividad IS NULL)
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
+	END
+ 
+	IF(@horaInicio IS NULL)
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- Hora invalida.'
+	END
+ 
+	--controlExistencia
+	IF( 
+	(@errorCount = 0) 
+	AND 
+	NOT EXISTS(
+		SELECT 1 FROM PnTablas.TieneHActividad 
+		WHERE Pago = @pago AND Actividad = @actividad AND FechaActividad = @fechaActividad AND HoraInicio = @horaInicio) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		SET @errorLine = @errorLine + CHAR(13) + '- El registro a eliminar no existe.'
+	END
+ 
+	IF(@errorCount = 0)
+	BEGIN
+		DELETE FROM PnTablas.TieneHActividad
+		WHERE Pago = @pago AND Actividad = @actividad AND FechaActividad = @fechaActividad AND HoraInicio = @horaInicio
+	END
+	ELSE
+		PRINT @errorLine
+END;
+GO
+PRINT '--Creado SP: bajaTHActividadOne--';
+GO

@@ -49,7 +49,7 @@ BEGIN
 		Duracion INT,
 		CupoMax INT,
 		Parque INT,
-		Tipo INT
+		Tipo INT,
 		FOREIGN KEY (Parque) REFERENCES PnTablas.Parque(IDParque),
 		FOREIGN KEY (Tipo) REFERENCES PnTablas.TipoActividad(IDTipoAct)
 	);

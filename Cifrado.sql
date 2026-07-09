@@ -206,27 +206,27 @@ END
 GO
 
 -- ---------------
--- Tabla Historial
+-- Tabla TieneHistorial
 -- ---------------
 
-IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Historial') AND name = 'RazonEgreso_Cifrada')
-    ALTER TABLE PnTablas.Historial ADD RazonEgreso_Cifrada VARBINARY(512) NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.TieneHistorial') AND name = 'RazonEgreso_Cifrada')
+    ALTER TABLE PnTablas.TieneHistorial ADD RazonEgreso_Cifrada VARBINARY(512) NULL;
 GO
 
 -- Migración usando SQL Dinámico
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Historial') AND name = 'RazonEgreso')
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.TieneHistorial') AND name = 'RazonEgreso')
 BEGIN
     EXEC('
         OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
-        UPDATE PnTablas.Historial 
+        UPDATE PnTablas.TieneHistorial 
         SET RazonEgreso_Cifrada = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, RazonEgreso))
         WHERE RazonEgreso IS NOT NULL;
         CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
     ');
-    PRINT '   -- Datos de Historial migrados.';
+    PRINT '   -- Datos de TieneHistorial migrados.';
     
-    ALTER TABLE PnTablas.Historial DROP COLUMN RazonEgreso;
-    PRINT '   -- Columna Historial.RazonEgreso eliminada.';
+    ALTER TABLE PnTablas.TieneHistorial DROP COLUMN RazonEgreso;
+    PRINT '   -- Columna TieneHistorial.RazonEgreso eliminada.';
 END
 GO
 

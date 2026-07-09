@@ -93,7 +93,7 @@ END
 GO
 
 --Tabla Historial
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Historial')
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'TieneHistorial')
 BEGIN
 	CREATE TABLE PnTablas.TieneHistorial
 	(
@@ -102,7 +102,9 @@ BEGIN
 		Parque INT NOT NULL,
 		FechaInicio DATE,
 		FechaEgreso DATE,
-		RazonEgreso varchar(40)
+		RazonEgreso varchar(40),
+		FOREIGN KEY(Guardaparque) REFERENCES PnTablas.GuardaParque(IDGuardaParque),
+		FOREIGN KEY(Parque) REFERENCES PnTablas.Parque(IDParque)
 	)
 	PRINT '--Creada Tabla: TieneHistorial--';
 END;

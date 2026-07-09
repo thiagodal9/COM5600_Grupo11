@@ -545,17 +545,17 @@ GO
 CREATE PROCEDURE PnSPabm.altaDias
 AS
 BEGIN
-	INSERT INTO PnTablas.Dia (NombreDia) 
-	VALUES 
-	('Lunes'), ('Martes'), ('Miercoles'), 
-	('Jueves'), ('Viernes'), ('Sabado'), 
-	('Domingo')
+	IF NOT EXISTS (SELECT 1 FROM PnTablas.Dia)
+	BEGIN
+		INSERT INTO PnTablas.Dia (NombreDia) 
+		VALUES 
+		('Lunes'), ('Martes'), ('Miercoles'), 
+		('Jueves'), ('Viernes'), ('Sabado'), 
+		('Domingo')
+	END
+	ELSE
+		PRINT 'ERROR: Los dias ya fueron cargados.'
 END;
-GO
-PRINT '--Creado SP: altaDias--';
-GO
-
-PRINT '--Creados SP para tabla Dia--';
 GO
 
 -------------------------------------------------------------------------------------

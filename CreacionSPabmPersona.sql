@@ -48,7 +48,7 @@ begin
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    IF ( (@rol NOT LIKE 'Guardaparque') OR (@rol NOT LIKE 'Guia') )
+    IF ( (@rol NOT LIKE 'Guardaparque') AND (@rol NOT LIKE 'Guia') )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -99,7 +99,7 @@ begin
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
     END
 
-    if ( (@rolNuevo IS NOT NULL) AND ( (@rolNuevo NOT LIKE 'Guardaparque') OR (@rolNuevo NOT LIKE 'Guia') ) )
+    if ( (@rolNuevo IS NOT NULL) AND ( (@rolNuevo NOT LIKE 'Guardaparque') AND (@rolNuevo NOT LIKE 'Guia') ) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
@@ -113,7 +113,7 @@ begin
     END
 
     --controlDuplicidad
-    if ( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.Persona WHERE DNI = @dniNuevo) )
+    if ( (@errorCount = 0) AND (@dniNuevo IS NOT NULL) AND EXISTS(SELECT 1 FROM PnTablas.Persona WHERE DNI = @dniNuevo AND IDPersona != @IDPersona) )
     BEGIN
         SET @errorCount = @errorCount + 1
 	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI en uso por otra persona.'
@@ -344,16 +344,10 @@ begin
         SET @errorCount = @errorCount + 1
         PRINT 'El idPersona no es de ningun guia registrado.'
     END
-
-    if ( (@errorCount = 0) AND exists (select 1 from PnTablas.Actividad where Guia = @idPersona) )
-    BEGIN
-        SET @errorCount = @errorCount + 1
-        PRINT 'El guia tiene actividades asignadas. Desasigne al guia antes de proceder.'
-    END
     
     IF(@errorCount = 0)
     BEGIN
-        EXECUTE desasignarEspecialidades @guia = @idPersona
+        EXECUTE PnSPabm.desasignarEspecialidades @guia = @idPersona
 
         delete from PnTablas.Guia
         where IDGuia = @idPersona;
