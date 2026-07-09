@@ -296,8 +296,8 @@ PRINT '--Creado SP: modificacionCostoConcesion--';
 GO
 
 -------------------------------------------------------------------------------------
---HistorialPago
 -------------------------------------------------------------------------------------
+----HistorialPago
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.altaFacturaConcesion'))
     DROP PROCEDURE PnSPtrans.altaFacturaConcesion

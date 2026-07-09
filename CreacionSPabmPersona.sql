@@ -341,7 +341,7 @@ begin
 
     IF(@errorCount = 0)
     BEGIN
-        insert into PnTablas.Guia(IDGuia, titulo, vencimientoHabilitacion, numeroHabilitacion)
+        insert into PnTablas.Guia(IDGuia, titulo, vencimientoHabilitacion, NumeroHabilitacion)
         values (@idPersona, @titulo, @vencimientoHabilitacion, @numeroHabilitacion)
     END
     ELSE
@@ -425,7 +425,7 @@ begin
         SET @errorLine = @errorLine + CHAR(13) + '- Numero de habilitacion invalido.'
     END
 
-    IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@vencimientoHabilitacionNuevo <= cast(getdate() as date)) )
+    IF( (@vencimientoHabilitacionNuevo IS NOT NULL) AND (@vencimientoHabilitacionNuevo <= cast(getdate() as date)) )
     BEGIN
         SET @errorCount = @errorCount + 1
         SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion vencida.'
@@ -444,7 +444,7 @@ begin
         set
         titulo = isnull(@tituloNuevo, titulo),
         vencimientoHabilitacion = isnull(@vencimientoHabilitacionNuevo, vencimientoHabilitacion),
-        numeroHabilitacion = isnull(@numeroHabilitacionNuevo, numeroHabilitacion)
+        NumeroHabilitacion = isnull(@numeroHabilitacionNuevo, NumeroHabilitacion)
         where IDGuia = @idPersona;
     END
 end;
@@ -572,7 +572,7 @@ begin
     END
 
     --controlReferencia
-    if( (@errorCount = 0) AND exists(select 1 from PnTablas.TieneEspecialidad where Guia = @idEspecialidad) )
+    if( (@errorCount = 0) AND exists(select 1 from PnTablas.TieneEspecialidad where Especialidad = @idEspecialidad) )
     BEGIN
         SET @errorCount = @errorCount + 1
         PRINT 'ERROR: Hay guias con esa especialidad. Desvinculelos antes de continuar.'

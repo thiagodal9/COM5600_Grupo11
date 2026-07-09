@@ -75,6 +75,7 @@ go
 Compra de Entradas
 ================================================================
 */
+-------------------------------------------------------------------------------------
 --apilar compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarEntradas'))
     DROP PROCEDURE PnSPabm.reservarEntradas
@@ -84,36 +85,36 @@ AS
 BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
-
+ 
 	SET @errorCount = 0
 	SET @errorLine = 'Error/es:'
-
+ 
 	--controlValidez
 	IF( (@entrada IS NULL) OR (@entrada <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Tipo de entrada invalida.'
 	END
-
+ 
 	IF( (@cantidad IS NULL) OR (@cantidad <= 0) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Cantidad invalida.'
 	END
-
+ 
 	IF( (@fecha IS NULL) OR (@fecha < CONVERT(DATE, GETDATE())) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Fecha invalida.'
 	END
-
+ 
 	--controlExistencia
 	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE IDTipoEntrada = @entrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
-
+ 
 	IF(@errorCount = 0)
 	BEGIN
 		IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
@@ -180,6 +181,7 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
+			
 			SET @total = (SELECT SUM(t.subTotal)
 						 FROM
 						 (
@@ -245,6 +247,7 @@ GO
 Venta de Actividades
 ================================================================
 */
+-------------------------------------------------------------------------------------
 --apilar compra
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarActividad'))
     DROP PROCEDURE PnSPabm.reservarActividad
@@ -364,6 +367,7 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
+			
 			IF EXISTS(
 			SELECT 1
 			FROM

@@ -33,11 +33,13 @@ Correciones menores de nombres incorrectos y de sintaxis.
 
 *Ajustes generales en varios SP
 ----------------------------------------------------------------------------------------
---Leandro
-*Correcciones menores en script CreacionSPabmConcesion/CreacionSPtransConcesion
-\Se movieron los SP con operaciones de transaccion en SPabmConcesion de vuelta a CreacionSPtransConcesion
+--Maximo
+Se reescribió Cifrado.sql para que el cifrado de RazonEgreso se aplique sobre PnSPtrans.altaHistorial yPnSPtrans.consultarHistorial, en vez 
+de recrear una versión desactualizada en PnSPabm que asumía columnas (Guardaparque, Parque, RazonEgreso_Cifrada), tambien se corrigieron errores
+debido al cambio de nombre de ciertas columnas debido al cifrado.
 
-*Se ajusto la tabla PagoVenta para acomodar el campo Moneda y asi incluir la funcionalidad de uso de APIs.
-\Se ajustaron SPs afectados para incluir dicha funcionalidad y se dejo comentado el lugar para realizar la ejecucion
-\de los SP que corresponden a las API
-\\Se hicieron algunos cambios menores de campos
+Se corrigio un bugs en modificacionGuia que chequeaba @numeroHabilitacionNuevo en vez de @vencimientoHabilitacionNuevo antes de validar
+la fecha de vencimiento) y se agregó el prefijo de schema faltante en la llamada a desasignarEspecialidades dentro de bajaGuia.
+
+Se agrego los testing de consecion, persona, entrada, venta. 
+

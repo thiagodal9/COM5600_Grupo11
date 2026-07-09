@@ -258,7 +258,7 @@ begin
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
 	END
 
-	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.PagoPoseeEntrada WHERE idEntrada = @idEntrada) )
+	IF( (@errorCount = 0) AND EXISTS(SELECT 1 FROM PnTablas.PoseeEntrada WHERE Entrada = @idEntrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Existe al menos una relacion entre esta entrada y ventas hechas. Elimine dicha relacion para continuar.'

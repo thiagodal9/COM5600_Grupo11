@@ -210,7 +210,7 @@ BEGIN
             SET @fechaIni = (SELECT FechaInicio FROM PnTablas.GuardaParque WHERE IDGuardaParque = @IDPersona)
             SET @fechaFin = CONVERT(DATE, GETDATE())
 
-            EXECUTE PnSPabm.altaHistorial 
+            EXECUTE PnSPtrans.altaHistorial 
             @Guardaparque = @IDPersona, 
             @parque = @Parque, 
             @fechaIni = @fechaIni,
@@ -308,7 +308,7 @@ BEGIN
             SET @fechaIni = (SELECT FechaInicio FROM PnTablas.GuardaParque WHERE IDGuardaParque = @IDPersona)
             SET @fechaFin = CONVERT(DATE, GETDATE())
 
-            EXECUTE PnSPabm.altaHistorial 
+            EXECUTE PnSPtrans.altaHistorial 
             @Guardaparque = @IDPersona, 
             @parque = @Parque, 
             @fechaIni = @fechaIni,
@@ -382,7 +382,7 @@ BEGIN
     BEGIN
         BEGIN TRANSACTION
         BEGIN TRY
-            EXECUTE PnSPabm.bajaHistorial @Guardaparque = @IDPersona
+            EXECUTE PnSPtrans.bajaHistorial @Guardaparque = @IDPersona
 
             DELETE FROM PnTablas.Guardaparque
             WHERE IDGuardaparque = @IDPersona

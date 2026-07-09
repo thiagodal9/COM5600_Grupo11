@@ -166,7 +166,6 @@ BEGIN
 END
 GO
 
--- Eliminación de CONSTRAINT y columnas (Lógica que ya tenías)
 DECLARE @constraintName NVARCHAR(256);
 SELECT @constraintName = kc.name
 FROM sys.key_constraints kc
@@ -352,6 +351,90 @@ go
 print '-- SP consultarPersona creado.';
 go
 
+--modificacionPersona
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionPersona'))
+    DROP PROCEDURE PnSPabm.modificacionPersona
+GO
+create procedure PnSPabm.modificacionPersona
+@IDPersona int,
+@dniNuevo int = NULL,
+@nombreNuevo varchar(20) = NULL,
+@apellidoNuevo varchar(20) = NULL,
+@telefonoNuevo varchar(12) = NULL,
+@rolNuevo varchar(10) = NULL
+as
+begin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    --controlValidezDatos
+    IF( (@IDPersona IS NULL) AND (@IDPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    if ( (@dniNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
+    END
+
+    IF( (@rolNuevo IS NOT NULL) AND (@rolNuevo NOT IN ('Guardaparque', 'Guia')) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
+    END
+
+    --controlExistencia
+    if ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- La persona no existe.'
+    END
+
+    --controlDuplicidad
+    if ( (@errorCount = 0) AND (@dniNuevo IS NOT NULL) AND EXISTS(SELECT 1 FROM PnTablas.Persona WHERE DNI_Cifrado = @dniNuevo AND IDPersona != @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI en uso por otra persona.'
+    END
+
+    --controlReferencias
+    if (@errorCount = 0)
+    BEGIN
+        IF( (@rolNuevo IS NOT NULL) AND
+        (( (@rolNuevo LIKE 'Guia') AND EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaParque = @IDPersona) )
+        OR
+        ( (@rolNuevo LIKE 'Guardaparque') AND EXISTS(SELECT 1 FROM PnTablas.Guia WHERE IDGuia = @IDPersona) )))
+        BEGIN
+            SET @errorCount = @errorCount + 1
+	        SET @errorLine = @errorLine + CHAR(13) + '- Persona activa en un rol diferente. Primero elimine el rol.'
+        END
+    END
+
+    IF (@errorCount = 0)
+    BEGIN
+        UPDATE PnTablas.Persona
+        SET
+            DNI_Cifrado = CASE WHEN @dniNuevo IS NOT NULL THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varbinary, @dniNuevo)) 
+                            ELSE DNI_Cifrado END,
+            NombrePersona = ISNULL(@nombreNuevo, NombrePersona),
+            apellido = ISNULL(@apellidoNuevo, apellido),
+            Telefono_Cifrado = CASE WHEN @telefonoNuevo IS NOT NULL THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varchar, @telefonoNuevo)) 
+                                ELSE Telefono_Cifrado END,
+            rol = ISNULL(@rolNuevo, rol)
+        WHERE idPersona = @IDPersona;
+    END
+    ELSE
+        PRINT @errorLine
+end;
+go
+
+
 -- ------------------------------------
 -- SP altaGuia (reemplaza al anterior)
 -- ------------------------------------
@@ -421,13 +504,78 @@ go
 print '   -- SP altaGuia actualizado con cifrado.';
 go
 
+--modificacionGuia
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionGuia'))
+    DROP PROCEDURE PnSPabm.modificacionGuia
+GO
+create procedure PnSPabm.modificacionGuia
+    @idPersona                   int,
+    @tituloNuevo                 varchar(100) = null,
+    @vencimientoHabilitacionNuevo date        = null,
+    @numeroHabilitacionNuevo     int          = null
+as
+begin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    --controlValidezDatos
+    IF( (@idPersona IS NULL) OR (@idPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@numeroHabilitacionNuevo <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Numero de habilitacion invalido.'
+    END
+
+    IF( (@vencimientoHabilitacionNuevo IS NOT NULL) AND (@vencimientoHabilitacionNuevo <= cast(getdate() as date)) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion vencida.'
+    END
+
+    --controlExistencia
+    if ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Guia WHERE IDGuia = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- El guia no existe.'
+    END
+
+    IF (@errorCount = 0)
+    BEGIN
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles
+            DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+
+        UPDATE PnTablas.Guia
+        SET
+            Titulo = ISNULL(@tituloNuevo, Titulo),
+            VencimientoHabilitacion = ISNULL(@vencimientoHabilitacionNuevo, VencimientoHabilitacion),
+            NumeroHabilitacion_Cifrado = CASE WHEN @numeroHabilitacionNuevo IS NOT NULL 
+                                                THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varbinary, CONVERT(varchar, @numeroHabilitacionNuevo))) 
+                                            ELSE NumeroHabilitacion_Cifrado END
+        WHERE IDGuia = @idPersona;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    END
+    ELSE
+    BEGIN
+        PRINT @errorLine;
+    END
+end;
+go
+
 -- -----------------------------------------
 -- SP: altaHistorial (reemplaza al anterior)
 -- -----------------------------------------
-if exists (select 1 from sys.objects where object_id = object_id('PnSPabm.altaHistorial'))
-    drop procedure PnSPabm.altaHistorial;
+if exists (select 1 from sys.objects where object_id = object_id('PnSPtrans.altaHistorial'))
+    drop procedure PnSPtrans.altaHistorial;
 go
-create procedure PnSPabm.altaHistorial
+create procedure PnSPtrans.altaHistorial
     @Guardaparque int,
     @parque int,
     @fechaIni date,
@@ -436,28 +584,38 @@ create procedure PnSPabm.altaHistorial
 with execute as owner
 as
 begin
-    if exists (
-        select 1 from PnTablas.Historial
-        where Guardaparque = @Guardaparque and FechaInicio = @fechaIni
-    )
-    begin
-        print 'ERROR: Registro de historial ya presente para esa fecha.';
-        return;
-    end
+    declare @IDout table(ID int)
 
-    open symmetric key SymKey_DatosSensibles
-        decryption by certificate CertColumnas_Pn;
+    begin transaction
+    begin try
+        open symmetric key SymKey_DatosSensibles
+            decryption by certificate CertColumnas_Pn;
 
-    insert into PnTablas.Historial (Guardaparque, Parque, FechaInicio, FechaEgreso, RazonEgreso_Cifrada)
-    values (
-        @Guardaparque,
-        @parque,
-        @fechaIni,
-        @fechaFin,
-        encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, @razon))
-    );
+        insert into PnTablas.Historial (FechaInicio, FechaEgreso, RazonEgreso)
+        output inserted.IDregistro into @IDout(ID)
+        values (@fechaIni, @fechaFin, @razon)
 
-    close symmetric key SymKey_DatosSensibles;
+        insert into PnTablas.TieneHistorial (Parque, Guardaparque, Registro, RazonEgreso_Cifrada)
+        values (
+            @parque,
+            @Guardaparque,
+            (select ID from @IDout),
+            encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, @razon))
+        )
+
+        close symmetric key SymKey_DatosSensibles;
+        commit transaction
+    end try
+    begin catch
+        if symkeyproperty(key_id('SymKey_DatosSensibles'), 'IsOpen') = 1
+            close symmetric key SymKey_DatosSensibles;
+        if @@trancount > 0
+            rollback transaction;
+
+        declare @Msg nvarchar(500) = error_message();
+        declare @Num int = error_number();
+        print concat('ERROR (', @Num, '): ', @Msg);
+    end catch
 end;
 go
 print '   -- SP altaHistorial actualizado con cifrado.';
@@ -466,10 +624,10 @@ go
 -- ---------------------------------------------
 -- SP consultarHistorial — descifra RazonEgreso
 -- ---------------------------------------------
-if exists (select 1 from sys.objects where object_id = object_id('PnSPabm.consultarHistorial'))
-    drop procedure PnSPabm.consultarHistorial;
+if exists (select 1 from sys.objects where object_id = object_id('PnSPtrans.consultarHistorial'))
+    drop procedure PnSPtrans.consultarHistorial;
 go
-create procedure PnSPabm.consultarHistorial
+create procedure PnSPtrans.consultarHistorial
     @Guardaparque int = null
 as
 begin
@@ -478,13 +636,14 @@ begin
 
     select
         h.IDregistro,
-        h.Guardaparque,
-        h.Parque,
+        th.Guardaparque,
+        th.Parque,
         h.FechaInicio,
         h.FechaEgreso,
-        convert(varchar(40), decryptbykey(h.RazonEgreso_Cifrada)) as RazonEgreso
+        convert(varchar(40), decryptbykey(th.RazonEgreso_Cifrada)) as RazonEgreso
     from PnTablas.Historial h
-    where (@Guardaparque is null or h.Guardaparque = @Guardaparque)
+    join PnTablas.TieneHistorial th on th.Registro = h.IDregistro
+    where (@Guardaparque is null or th.Guardaparque = @Guardaparque)
     order by h.FechaInicio desc;
 
     close symmetric key SymKey_DatosSensibles;
