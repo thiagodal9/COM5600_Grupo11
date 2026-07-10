@@ -69,20 +69,20 @@ GO
 DECLARE @fechaHoy DATE = CAST(GETDATE() AS DATE);
 DECLARE @fechaFinDeAnio DATE = DATEADD(month, 6, GETDATE());
 
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 999, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 50000;
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 1, @idParque = 999, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 50000;
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = -100;
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaFinDeAnio, @fechaFin = @fechaHoy, @precioAlquiler = 50000;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 999, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 50000;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 1, @idParque = 999, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 50000;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = -100;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaFinDeAnio, @fechaFin = @fechaHoy, @precioAlquiler = 50000;
 GO
 
 --RESULTADO ESPERADO: Insercion Exitosa (Concesion)
 DECLARE @fechaHoy DATE = CAST(GETDATE() AS DATE);
 DECLARE @fechaFinDeAnio DATE = DATEADD(month, 6, GETDATE());
 
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 150000.50;
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 2, @idParque = 2, @rubro = 'Gastronomia', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 85000.00;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 1, @idParque = 1, @rubro = 'Transporte', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 150000.50;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 2, @idParque = 2, @rubro = 'Gastronomia', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 85000.00;
 -- Concesion 3: Creada para testear la baja de Concesion sin afectar el proximo script
-EXECUTE PnSPabm.altaConcesion @idEmpresa = 3, @idParque = 1, @rubro = 'Souvenirs', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 10000.00;
+EXECUTE PnSPtrans.altaConcesion @idEmpresa = 3, @idParque = 1, @rubro = 'Souvenirs', @fechaInicio = @fechaHoy, @fechaFin = @fechaFinDeAnio, @precioAlquiler = 10000.00;
 GO
 
 SELECT * FROM PnTablas.Concesion;
@@ -91,16 +91,16 @@ GO
 --RESULTADOS ESPERADOS: Modificacion Fallida (Concesion)
 DECLARE @fechaAyer DATE = DATEADD(day, -1, GETDATE());
 
-EXECUTE PnSPabm.modificacionCostoConcesion @idConcesion = 1, @costo = -500;
-EXECUTE PnSPabm.modificacionFechaFConcesion @idConcesion = 1, @fechaFinNEW = @fechaAyer;
-EXECUTE PnSPabm.modificacionCostoConcesion @idConcesion = 999, @costo = 10000;
+EXECUTE PnSPtrans.modificacionCostoConcesion @idConcesion = 1, @costo = -500;
+EXECUTE PnSPtrans.modificacionFechaFConcesion @idConcesion = 1, @fechaFinNEW = @fechaAyer;
+EXECUTE PnSPtrans.modificacionCostoConcesion @idConcesion = 999, @costo = 10000;
 GO
 
 --RESULTADO ESPERADO: Modificacion Exitosa (Concesion)
 DECLARE @fechaNueva DATE = DATEADD(year, 1, GETDATE());
 
-EXECUTE PnSPabm.modificacionCostoConcesion @idConcesion = 1, @costo = 200000.00;
-EXECUTE PnSPabm.modificacionFechaFConcesion @idConcesion = 2, @fechaFinNEW = @fechaNueva;
+EXECUTE PnSPtrans.modificacionCostoConcesion @idConcesion = 1, @costo = 200000.00;
+EXECUTE PnSPtrans.modificacionFechaFConcesion @idConcesion = 2, @fechaFinNEW = @fechaNueva;
 GO
 
 SELECT * FROM PnTablas.Concesion;
@@ -110,7 +110,7 @@ GO
 ---- TESTING Bajas Exitosas (ABM Puro sin dependencias transaccionales)
 
 --RESULTADO ESPERADO: Baja Concesion Exitosa (Eliminamos la concesion 3)
-EXECUTE PnSPabm.bajaConcesion @idConcesion = 3;
+EXECUTE PnSPtrans.bajaConcesion @idConcesion = 3;
 GO
 SELECT * FROM PnTablas.Concesion;
 GO
