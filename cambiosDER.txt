@@ -1,0 +1,42 @@
+----CAMBIOS
+Solo se indicaran aquellos cambios mas significativos.
+----------------------------------------------------------------------------------------
+--Version 1
+*Version entregada inicialmente.
+
+----------------------------------------------------------------------------------------
+--Version 2
+*Se creo la entidad Provincia para mejor manejo de la ubicacion de un Parque y limitar dicho atributo a las
+provincias (es un proyecto a nivel nacional).
+
+*Para reflejar con mayor facilidad los horarios de apertura/cierre de un parque durante los diferentes dias y temporadas, 
+se creo la entidad Dia para trabajar en unisono con la tabla HorarioParque y, ademas, limitar dicho atributo a los dias de la semana.
+
+*Se creo la entidad TipoEntrada para el mejor manejo de las varias entradas disponibles y, ademas, limitar dicho atributo.
+
+*Ahora la entidad Entrada esta relacionada con Parque para permitir relacionar determinados valores de entradas con
+parques en particular.
+
+*Se elimino la entidad Venta y su lugar fue tomado por PagoVenta por medio de unificacion debido a que la primera no
+presentaba sucifientes atributos unicos para justificar su existencia.
+
+*El atributo Telefono de Parque paso a ser multivaluado para reflejar la existencia de multiples numeros para un solo parque
+tras investigacion de casos reales.
+
+----------------------------------------------------------------------------------------
+--Version 3
+*Ajustes de visualizacion para mejor comprension.
+
+----------------------------------------------------------------------------------------
+--Version 4
+*Se modifico la relacion entre Guardaparque-Parque-Historial para mejor reflejar el caso real donde es necesario saber no
+solo los periodos de actividad de un individuo sino tambien donde realizo dicha actividad. Por esta razon, Historial paso
+a ser una entidad fuerte.
+
+----------------------------------------------------------------------------------------
+--Version 5 (F)
+*Se movio la relacion de Guia-Actividad a Guia-HorarioActividad para reflejar el caso real donde un guia puede estar asignado
+a un determinado horario de una determinada actividad y no solo pertenecer a una actividad especifica.
+
+*Agregado de atributos que no estaban presentes en versiones anteriores y otras modificaciones menores relacionados a cambios
+durante la etapa de desarrollo.
