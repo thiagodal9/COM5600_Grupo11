@@ -50,4 +50,6 @@ Se aumento el tam de rol a varchar(15), ya que fallaba el alta.
 
 Se documenta correctamente el orden de ejecucion de los scripts
 
+Se implementa la generacion de reportes y testing del mismo
+
 
