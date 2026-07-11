@@ -61,7 +61,10 @@ begin
 		SET @errorLine = @errorLine + CHAR(13) + '- Rubro invalido.'
 	END
 
-	IF(((@fechaInicio IS NULL) OR (@fechaFin IS NULL)) OR (@fechaInicio >= @fechaFin))
+	IF(
+	((@fechaInicio IS NULL) OR (@fechaFin IS NULL)) 
+	OR (@fechaInicio >= @fechaFin)
+	OR (@fechaFin <= CONVERT(DATE, GETDATE())) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Fechas invalidas.'
