@@ -53,4 +53,7 @@ Se documenta correctamente el orden de ejecucion de los scripts
 Se implementa la generacion de reportes y testing del mismo
 ----------------------------------------------------------------------------------------
 --Leandro
-*Se agrego un script con la creacion de varios SP para cubrir requisitos de funcionalidad del proyecto asi como tambien un script de testing del mismo
+*Se agrego un script con la creacion de varios SP para cubrir requisitos de funcionalidad del proyecto 
+asi como tambien un script de testing del mismo
+*Se modifico la condicion de control de fechas en altaConcesion para atrapar el caso de una alta de concesion vencida
+como se pide en la lista de casos obligatorios
