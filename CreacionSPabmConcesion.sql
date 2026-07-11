@@ -27,7 +27,7 @@ abm Empresa
 */
 --Alta
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaEmpresa'))
-    DROP PROCEDURE PnSPabm.altaEmpresa
+    DROP PROCEDURE PnSPabm.altaEmpresa;
 GO
 create procedure PnSPabm.altaEmpresa
 @nombre varchar(20),

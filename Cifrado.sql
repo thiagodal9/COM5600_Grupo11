@@ -247,7 +247,7 @@ create procedure PnSPabm.altaPersona
     @nombre varchar(20),
     @apellido varchar(20),
     @telefono varchar(12),
-    @rol varchar(10)
+    @rol varchar(15)
 with execute as owner
 as
 begin
@@ -361,7 +361,7 @@ create procedure PnSPabm.modificacionPersona
 @nombreNuevo varchar(20) = NULL,
 @apellidoNuevo varchar(20) = NULL,
 @telefonoNuevo varchar(12) = NULL,
-@rolNuevo varchar(10) = NULL
+@rolNuevo varchar(15) = NULL
 as
 begin
     DECLARE @errorCount INT

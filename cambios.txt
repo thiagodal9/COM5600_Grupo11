@@ -42,4 +42,14 @@ Se corrigio un bugs en modificacionGuia que chequeaba @numeroHabilitacionNuevo e
 la fecha de vencimiento) y se agregó el prefijo de schema faltante en la llamada a desasignarEspecialidades dentro de bajaGuia.
 
 Se agrego los testing de consecion, persona, entrada, venta. 
+----------------------------------------------------------------------------------------
+--Maximo
+Se corrigio sintaxis en abm consecion, se agrego mas datos en dataset y un script para la limpieza de los mismos
+
+Se aumento el tam de rol a varchar(15), ya que fallaba el alta.
+
+Se documenta correctamente el orden de ejecucion de los scripts
+
+Se implementa la generacion de reportes y testing del mismo
+
 
