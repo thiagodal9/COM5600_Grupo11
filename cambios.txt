@@ -1,4 +1,53 @@
-----CAMBIOS
+----CAMBIOS (desarrollo comenzo basado en la version 2 del DER)
+----------------------------------------------------------------------------------------
+SPs TipoEntrada/Entrada
+--Agregadas validaciones de datos de entrada, control de duplicidad y control de referencias
+--Eliminadas transacciones, no hacen falta a no ser que se este operando sobre
+varias tablas simultaneamente o la operacion sea critica.
+--Ajustado el SP para modificar la entrada a que solo se pueda modificar el precio, el resto
+de los campos deberian no poder modificarse
+
+Tabla Venta
+--Cambiar fechaPago a fechaHora con tipo DATETIME para reflejar mas correctamente una
+boleta de pago
+--Eliminado campo Venta INT de PagoVenta. Quedo de la version anterior cuando estaba la tabla Venta
+--Agregadas validaciones de datos de entrada, control de duplicidad y control de referencias
+--Eliminado SP modificacion de PagoVenta. No tiene mucho sentido modificar algo de un pago ya confirmado
+--Ahora bajaVenta tambien baja en las tablas Posee y Tiene
+--Cambiados nombres de tablas a como aparecen en el script tablasBase para evitar conflictos
+con otros scripts
+--Donde no es necesario, se eliminaron validaciones porque los datos de entrada al SP
+los provee un SP superior
+--Se agrego el campo FechaAcceso a altaVentaEntrada para correctamente reflejar la
+totalidad de la entidad
+--Se cambio bajaVentaEntrada por un SP que "limpia" la tabla temporal y la deja
+lista para otra serie de pedidos
+--Mismo proceder con #ventaEntradas
+
+SPs de Venta
+--Agregados SPs para manejar las ventas de entradas y actividades
+----------------------------------------------------------------------------------------
+Se desarrolló el script maestro OrdenDeCreacion.sql para estructurar y documentar el despliegue de la base de datos desde cero. Al requerir el uso del Modo SQLCMD, este archivo automatiza la ejecución secuencial de los scripts individuales respetando la jerarquía de las dependencias debido a las claves foráneas. Esta implementación evita errores de referencias cruzadas.
+
+Para reflejar fielmente el DER, se eliminó la tabla intermedia TieneHistorial. En su lugar, se modifico la tabla Historial, incorporando directamente en ella las claves foráneas correspondientes a Guardaparque y Parque.
+
+Se agregó el campo HoraInicio a la clave primaria, quedando PRIMARY KEY(Actividad, FechaActividad, HoraInicio). Para permitir que una misma actividad (por ejemplo, una excursión) pueda dictarse en distintos horarios durante un mismo día. Con la clave anterior, se bloqueaba la inserción de un segundo turno en la misma fecha.
+
+Se cambiaron los campos de texto de longitud variable (como DescripcionAct, Titulo, RazonEgreso) de CHAR a VARCHAR.
+Se aumentó la capacidad del campo NombreParque (VARCHAR(100)). Existen parques nacionales reales con nombres extensos, los cuales habrían hecho fallar los procesos de inserción si el límite se mantenía en 30 caracteres.
+Se agrego el esquema PnSPabm a asignarEspecialidad, desasignarEspecialidad, desasignarEspecialidades y reasignarEspecialidad.
+Correcion de “IF( (@temporada != 'Verano') OR (@temporada != 'Invierno') OR (@temporada != 'Otoño') OR (@temporada != 'Primavera'))” por  “IF (@temporada NOT IN ('Verano', 'Invierno', 'Otoño', 'Primavera'))” en altahorario.
+Correciones menores y de sintaxis.
+
+Observaciones (Posibles cambios)
+Asignación de guías en la tabla Actividad:
+Actualmente, el campo guia es una clave foránea en la tabla Actividad. Se asume que una actividad genérica le pertenece a un único guía de forma estática. Probablemente se debería registrar qué guía participa en cada tour, mover esta asignación a la tabla HorarioActividad, la instancia específica del tour. Esto permitiría que distintos guías tomen diferentes turnos de la misma actividad.
+
+Consideraciones sobre el Cifrado de Datos (Entrega 8):
+El proyecto exige aplicar cifrado a los datos sensibles, El campo DNI en la tabla Persona seria el candidato para esto. Actualmente, DNI está definido como INT NOT NULL UNIQUE. Si más se cifra esta columna (lo que requieriria cambiar el tipo de dato a VARBINARY), hay que tener en cuenta que las funciones de cifrado de SQL Server pueden generar resultados diferentes para un mismo valor de entrada. Esto romperia la validación del constraint UNIQUE nativo, por lo que la validación de duplicados deberá manejarse con una estrategia distinta (por ejemplo, mediante una columna de hash complementaria o directamente en la lógica del procedimiento almacenado).
+
+Modificacion 22/06/2026: 
+Implementacion del cifrado, roles y politica de seguridad. Imlementacion de constraint UQ_Persona_DNI en tabla persona para que los scripts de migración funcionen correctamente, sin esto SQL Server genera uno aleatorio cada que se corre el create y el script de cifrado fallaria al intentar buscar una restricción que ya no se llama igual.
 ----------------------------------------------------------------------------------------
 --Leandro
 *Revision/Correccion/Finalizacion de script de testing para SPabm de tablas Actividad
