@@ -1,0 +1,656 @@
+/*
+--/--/2026
+Universidad Nacional de La Matanza
+Bases de Datos Aplicada
+
+Grupo 11
+DAL SECCO THIAGO
+LEANDRO LEONEL VILLALBA
+MAXIMO ANDINO
+LEOPALDI PINAZZI AGUSTIN EMANUEL
+
+Cifrado de datos sensibles mediante cifr simetrico a nivel de columna.
+
+
+Se queria implementar cifrado mediante TDE pero SQL Server 2025 Express Edition no es compatible
+SELECT @@VERSION AS [Version_Info];
+
+
+Datos sensibles identificados:
+  - Persona.DNI
+  - Persona.Telefono
+  - Guia.NumeroHabilitacion
+  - Historial.RazonEgreso
+
+Estrategia:
+  - Cifrado simetrico a nivel de columna: columnas especificas en tablas. Los SP de consulta decifran con OPEN SYMMETRIC KEY.
+  - Las columnas cifradas se almacenan como varbinary.
+  - Los SP abm existentes se modifican para cifrar al escribir y descifrar al leer.
+*/
+
+if exists (select name from sys.databases where name = 'ParquesNacionales')
+begin
+	use ParquesNacionales
+	print '--Usando BD: ParquesNacionales--' 
+end;
+go
+
+-- ============================================================
+-- TRANSPARENT DATA ENCRYPTION (TDE)
+-- Cifra el archivo de datos en reposo a nivel de base de datos.
+-- ============================================================
+/*
+print '-- [1/4] Configurando Transparent Data Encryption...';
+go
+
+-- Crear master key en la base master si no existe
+use master;
+go
+if not exists (select 1 from sys.symmetric_keys where name = '##MS_DatabaseMasterKey##')
+begin
+    create master key encryption by password = 'Pn_MasterKey_2026!Seguro';
+    print '   -- Master Key creada en [master].'
+end
+else
+    print '   -- Master Key ya existente en [master].';
+go
+
+-- Crear certificado para TDE
+if not exists (select 1 from sys.certificates where name = 'CertTDE_ParquesNacionales')
+begin
+    create certificate CertTDE_ParquesNacionales
+    with subject = 'Certificado TDE - ParquesNacionales 2026';
+    print '   -- Certificado TDE creado.'
+end
+else
+    print '   -- Certificado TDE ya existente.';
+go
+
+-- Crear database encryption key en la BD del proyecto
+use ParquesNacionales;
+go
+if not exists (select 1 from sys.dm_database_encryption_keys where database_id = db_id())
+begin
+    create database encryption key
+    with algorithm = aes_256
+    encryption by server certificate CertTDE_ParquesNacionales;
+    print '   -- Database Encryption Key creada.'
+end
+else
+    print '   -- Database Encryption Key ya existente.';
+go
+
+-- Activar TDE
+alter database ParquesNacionales set encryption on;
+go
+print '-- TDE activado sobre ParquesNacionales.';
+go
+*/
+-- ===========================================================
+-- CIFRADO SIMETRICO A NIVEL DE COLUMNA
+-- Columnas: DNI, Telefono, NumeroHabilitacion, RazonEgreso
+-- ===========================================================
+
+print '-- [2/4] Configurando cifrado simetrico a nivel de columna...';
+go
+
+-- Master Key de la base de datos de aplicacion
+if not exists (select 1 from sys.symmetric_keys where name = '##MS_DatabaseMasterKey##')
+begin
+    create master key encryption by password = 'Pn_AppMasterKey_2026!Seguro';
+    print '   -- Database Master Key creada en ParquesNacionales.'
+end
+else
+    print '   -- Database Master Key ya existente en ParquesNacionales.';
+go
+
+-- Certificado para cifrado de columnas
+if not exists (select 1 from sys.certificates where name = 'CertColumnas_Pn')
+begin
+    create certificate CertColumnas_Pn
+    with subject = 'Certificado cifrado de columnas - ParquesNacionales';
+    print '   -- Certificado de columnas creado.'
+end
+else
+    print '   -- Certificado de columnas ya existente.';
+go
+
+-- Clave simetrica AES-256 protegida por el certificado
+if not exists (select 1 from sys.symmetric_keys where name = 'SymKey_DatosSensibles')
+begin
+    create symmetric key SymKey_DatosSensibles
+    with algorithm = aes_256
+    encryption by certificate CertColumnas_Pn;
+    print '   -- Clave simetrica SymKey_DatosSensibles creada.'
+end
+else
+    print '   -- Clave simetrica ya existente.';
+go
+
+-- ============================================================
+-- MODIFICACION DE TABLAS
+-- Se agregan columnas cifradas y se mantienen las originales
+-- durante la migracion, al final se eliminan.
+-- ============================================================
+
+print '-- [3/4] Migrando columnas sensibles a formato cifrado...';
+go
+
+-- -------------
+-- Tabla Persona
+-- -------------
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI_Cifrado')
+BEGIN
+    ALTER TABLE PnTablas.Persona ADD 
+        DNI_Cifrado      VARBINARY(256) NULL,
+        Telefono_Cifrado VARBINARY(256) NULL,
+        HashDNI          VARBINARY(32)  NULL;
+    PRINT '   -- Columnas cifradas agregadas a Persona.';
+END
+GO
+
+-- Migración de datos usando SQL Dinámico (Evita el error 207)
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI')
+BEGIN
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.Persona 
+        SET DNI_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, CONVERT(VARCHAR, DNI))),
+            Telefono_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, Telefono)),
+            HashDNI = HASHBYTES(''SHA2_256'', CONVERT(VARBINARY, CONVERT(VARCHAR, DNI)))
+        WHERE DNI IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
+    PRINT '   -- Datos de Persona migrados.';
+END
+GO
+
+DECLARE @constraintName NVARCHAR(256);
+SELECT @constraintName = kc.name
+FROM sys.key_constraints kc
+JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id AND kc.unique_index_id = ic.index_id
+JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+WHERE kc.parent_object_id = OBJECT_ID('PnTablas.Persona') AND c.name = 'DNI' AND kc.type = 'UQ';
+
+IF @constraintName IS NOT NULL
+    EXEC('ALTER TABLE PnTablas.Persona DROP CONSTRAINT ' + @constraintName);
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'DNI')
+    ALTER TABLE PnTablas.Persona DROP COLUMN DNI;
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Persona') AND name = 'Telefono')
+    ALTER TABLE PnTablas.Persona DROP COLUMN Telefono;
+GO
+
+-- ----------
+-- Tabla Guia
+-- ----------
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.Guia') AND name = 'NumeroHabilitacion_Cifrado')
+BEGIN
+    ALTER TABLE PnTablas.Guia ADD NumeroHabilitacion_Cifrado VARBINARY(256) NULL;
+
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.Guia 
+        SET NumeroHabilitacion_Cifrado = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, CONVERT(VARCHAR, NumeroHabilitacion)))
+        WHERE NumeroHabilitacion IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
+
+    ALTER TABLE PnTablas.Guia DROP COLUMN NumeroHabilitacion;
+    PRINT '   -- Guia: Migración completada.';
+END
+GO
+
+-- ---------------
+-- Tabla TieneHistorial
+-- ---------------
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.TieneHistorial') AND name = 'RazonEgreso_Cifrada')
+    ALTER TABLE PnTablas.TieneHistorial ADD RazonEgreso_Cifrada VARBINARY(512) NULL;
+GO
+
+-- Migración usando SQL Dinámico
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = object_id('PnTablas.TieneHistorial') AND name = 'RazonEgreso')
+BEGIN
+    EXEC('
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+        UPDATE PnTablas.TieneHistorial 
+        SET RazonEgreso_Cifrada = ENCRYPTBYKEY(KEY_GUID(''SymKey_DatosSensibles''), CONVERT(VARBINARY, RazonEgreso))
+        WHERE RazonEgreso IS NOT NULL;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    ');
+    PRINT '   -- Datos de TieneHistorial migrados.';
+    
+    ALTER TABLE PnTablas.TieneHistorial DROP COLUMN RazonEgreso;
+    PRINT '   -- Columna TieneHistorial.RazonEgreso eliminada.';
+END
+GO
+
+-- ==========================================================
+-- SP PARA OPERAR DATOS CIFRADOS
+-- ==========================================================
+
+print '-- [4/4] Creando/reemplazando SPs que operan con columnas cifradas...';
+go
+
+-- ---------------------------------------
+-- SP altaPersona (reemplaza al anterior)
+-- ---------------------------------------
+if exists (select 1 from sys.objects where object_id = object_id('PnSPabm.altaPersona'))
+    drop procedure PnSPabm.altaPersona;
+go
+create procedure PnSPabm.altaPersona
+    @dni int,
+    @nombre varchar(20),
+    @apellido varchar(20),
+    @telefono varchar(12),
+    @rol varchar(15)
+with execute as owner
+as
+begin
+    SET NOCOUNT ON;
+    declare @errorCount int = 0;
+    declare @errorLine  varchar(200) = 'Error/es:';
+
+    if (@dni is null or @dni <= 0 or @dni > 99999999)
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Numero de DNI invalido.';
+    end
+
+    if (@rol not in ('Guardaparque', 'Guia'))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Rol invalido. Valores: Guardaparque, Guia.';
+    end
+
+    if (@nombre is null or ltrim(@nombre) = '')
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Nombre invalido.';
+    end
+
+    if (@apellido is null or ltrim(@apellido) = '')
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Apellido invalido.';
+    end
+
+    -- busca DNI cifrado comparando hash
+    -- Usamos HASHBYTES para comparacion sin necesidad de abrir la clave en cada fila
+    if (@errorCount = 0 and exists(
+        select 1 from PnTablas.Persona
+        where HashDNI = hashbytes('SHA2_256', convert(varbinary, convert(varchar, @dni)))
+    ))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Persona con ese DNI ya presente.';
+    end
+
+    IF @errorCount = 0
+    BEGIN
+        BEGIN TRY
+            OPEN SYMMETRIC KEY SymKey_DatosSensibles
+                DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+
+            INSERT INTO PnTablas.Persona (NombrePersona, Apellido, Rol, DNI_Cifrado, Telefono_Cifrado, HashDNI)
+            VALUES (
+                @nombre,
+                @apellido,
+                @rol,
+                ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(VARBINARY, CONVERT(VARCHAR, @dni))),
+                ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(VARBINARY, @telefono)),
+                HASHBYTES('SHA2_256', CONVERT(VARBINARY, CONVERT(VARCHAR, @dni)))
+            );
+            CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+        END TRY
+        BEGIN CATCH
+            IF SYMKEYPROPERTY(KEY_ID('SymKey_DatosSensibles'), 'IsOpen') = 1
+                CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+            
+            PRINT 'Error grave al intentar cifrar los datos. Verifique la configuración del certificado.';
+            THROW; 
+        END CATCH
+    END
+    ELSE
+        PRINT @errorLine;
+end;
+go
+print '   -- SP altaPersona actualizado con cifrado.';
+go
+
+-- ----------------------------------------------------------------
+-- SP: consultarPersona (solo roles autorizados pueden ejecutarlo)
+-- ----------------------------------------------------------------
+if exists (select 1 from sys.objects where object_id = object_id('PnSPabm.consultarPersona'))
+    drop procedure PnSPabm.consultarPersona;
+go
+create procedure PnSPabm.consultarPersona
+    @IDPersona int = null   -- null = todas las personas
+as
+begin
+    open symmetric key SymKey_DatosSensibles
+        decryption by certificate CertColumnas_Pn;
+
+    select
+        p.IDPersona,
+        p.NombrePersona,
+        p.Apellido,
+        p.Rol,
+        convert(int, convert(varchar, decryptbykey(p.DNI_Cifrado))) as DNI,
+        convert(varchar(12), decryptbykey(p.Telefono_Cifrado)) as Telefono
+    from PnTablas.Persona p
+    where (@IDPersona is null or p.IDPersona = @IDPersona);
+
+    close symmetric key SymKey_DatosSensibles;
+end;
+go
+print '-- SP consultarPersona creado.';
+go
+
+--modificacionPersona
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionPersona'))
+    DROP PROCEDURE PnSPabm.modificacionPersona
+GO
+create procedure PnSPabm.modificacionPersona
+@IDPersona int,
+@dniNuevo int = NULL,
+@nombreNuevo varchar(20) = NULL,
+@apellidoNuevo varchar(20) = NULL,
+@telefonoNuevo varchar(12) = NULL,
+@rolNuevo varchar(15) = NULL
+as
+begin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    --controlValidezDatos
+    IF( (@IDPersona IS NULL) AND (@IDPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    if ( (@dniNuevo IS NOT NULL) AND ( (@dniNuevo <= 0) OR (99999999 < @dniNuevo) ) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI invalido.'
+    END
+
+    IF( (@rolNuevo IS NOT NULL) AND (@rolNuevo NOT IN ('Guardaparque', 'Guia')) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Rol invalido.'
+    END
+
+    --controlExistencia
+    if ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Persona WHERE IDPersona = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- La persona no existe.'
+    END
+
+    --controlDuplicidad
+    if ( (@errorCount = 0) AND (@dniNuevo IS NOT NULL) AND EXISTS(SELECT 1 FROM PnTablas.Persona WHERE DNI_Cifrado = @dniNuevo AND IDPersona != @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+	    SET @errorLine = @errorLine + CHAR(13) + '- Numero de DNI en uso por otra persona.'
+    END
+
+    --controlReferencias
+    if (@errorCount = 0)
+    BEGIN
+        IF( (@rolNuevo IS NOT NULL) AND
+        (( (@rolNuevo LIKE 'Guia') AND EXISTS(SELECT 1 FROM PnTablas.Guardaparque WHERE IDGuardaParque = @IDPersona) )
+        OR
+        ( (@rolNuevo LIKE 'Guardaparque') AND EXISTS(SELECT 1 FROM PnTablas.Guia WHERE IDGuia = @IDPersona) )))
+        BEGIN
+            SET @errorCount = @errorCount + 1
+	        SET @errorLine = @errorLine + CHAR(13) + '- Persona activa en un rol diferente. Primero elimine el rol.'
+        END
+    END
+
+    IF (@errorCount = 0)
+    BEGIN
+        UPDATE PnTablas.Persona
+        SET
+            DNI_Cifrado = CASE WHEN @dniNuevo IS NOT NULL THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varbinary, @dniNuevo)) 
+                            ELSE DNI_Cifrado END,
+            NombrePersona = ISNULL(@nombreNuevo, NombrePersona),
+            apellido = ISNULL(@apellidoNuevo, apellido),
+            Telefono_Cifrado = CASE WHEN @telefonoNuevo IS NOT NULL THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varchar, @telefonoNuevo)) 
+                                ELSE Telefono_Cifrado END,
+            rol = ISNULL(@rolNuevo, rol)
+        WHERE idPersona = @IDPersona;
+    END
+    ELSE
+        PRINT @errorLine
+end;
+go
+
+
+-- ------------------------------------
+-- SP altaGuia (reemplaza al anterior)
+-- ------------------------------------
+if exists (select 1 from sys.objects where object_id = object_id('PnSPabm.altaGuia'))
+    drop procedure PnSPabm.altaGuia;
+go
+create procedure PnSPabm.altaGuia
+    @idPersona int,
+    @titulo varchar(100),
+    @vencimientoHabilitacion date,
+    @numeroHabilitacion int
+with execute as owner
+as
+begin
+    declare @errorCount int = 0;
+    declare @errorLine  varchar(200) = 'Error/es:';
+
+    if (@numeroHabilitacion is null or @numeroHabilitacion <= 0)
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Numero de habilitacion invalido.';
+    end
+
+    if (@vencimientoHabilitacion is null or @vencimientoHabilitacion <= cast(getdate() as date))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Habilitacion vencida o invalida.';
+    end
+
+    if (@errorCount = 0 and not exists(select 1 from PnTablas.Persona where IDPersona = @idPersona))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- La persona no existe.';
+    end
+
+    if (@errorCount = 0 and exists(select 1 from PnTablas.Persona where IDPersona = @idPersona and Rol <> 'Guia'))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- La persona tiene un rol diferente asignado.';
+    end
+
+    if (@errorCount = 0 and exists(select 1 from PnTablas.Guia where IDGuia = @idPersona))
+    begin
+        set @errorCount += 1;
+        set @errorLine  += char(13) + '- Guia ya presente.';
+    end
+
+    if @errorCount = 0
+    begin
+        open symmetric key SymKey_DatosSensibles
+            decryption by certificate CertColumnas_Pn;
+
+        insert into PnTablas.Guia (IDGuia, Titulo, VencimientoHabilitacion, NumeroHabilitacion_Cifrado)
+        values (
+            @idPersona,
+            @titulo,
+            @vencimientoHabilitacion,
+            encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, convert(varchar, @numeroHabilitacion)))
+        );
+
+        close symmetric key SymKey_DatosSensibles;
+    end
+    else
+        print @errorLine;
+end;
+go
+print '   -- SP altaGuia actualizado con cifrado.';
+go
+
+--modificacionGuia
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.modificacionGuia'))
+    DROP PROCEDURE PnSPabm.modificacionGuia
+GO
+create procedure PnSPabm.modificacionGuia
+    @idPersona                   int,
+    @tituloNuevo                 varchar(100) = null,
+    @vencimientoHabilitacionNuevo date        = null,
+    @numeroHabilitacionNuevo     int          = null
+as
+begin
+    DECLARE @errorCount INT
+    DECLARE @errorLine varchar(100)
+
+    SET @errorCount = 0
+    SET @errorLine = 'Error/es:'
+
+    --controlValidezDatos
+    IF( (@idPersona IS NULL) OR (@idPersona <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Persona invalida.'
+    END
+
+    IF( (@numeroHabilitacionNuevo IS NOT NULL) AND (@numeroHabilitacionNuevo <= 0) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Numero de habilitacion invalido.'
+    END
+
+    IF( (@vencimientoHabilitacionNuevo IS NOT NULL) AND (@vencimientoHabilitacionNuevo <= cast(getdate() as date)) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- Habilitacion vencida.'
+    END
+
+    --controlExistencia
+    if ( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Guia WHERE IDGuia = @IDPersona) )
+    BEGIN
+        SET @errorCount = @errorCount + 1
+        SET @errorLine = @errorLine + CHAR(13) + '- El guia no existe.'
+    END
+
+    IF (@errorCount = 0)
+    BEGIN
+        OPEN SYMMETRIC KEY SymKey_DatosSensibles
+            DECRYPTION BY CERTIFICATE CertColumnas_Pn;
+
+        UPDATE PnTablas.Guia
+        SET
+            Titulo = ISNULL(@tituloNuevo, Titulo),
+            VencimientoHabilitacion = ISNULL(@vencimientoHabilitacionNuevo, VencimientoHabilitacion),
+            NumeroHabilitacion_Cifrado = CASE WHEN @numeroHabilitacionNuevo IS NOT NULL 
+                                                THEN ENCRYPTBYKEY(KEY_GUID('SymKey_DatosSensibles'), CONVERT(varbinary, CONVERT(varchar, @numeroHabilitacionNuevo))) 
+                                            ELSE NumeroHabilitacion_Cifrado END
+        WHERE IDGuia = @idPersona;
+        CLOSE SYMMETRIC KEY SymKey_DatosSensibles;
+    END
+    ELSE
+    BEGIN
+        PRINT @errorLine;
+    END
+end;
+go
+
+-- -----------------------------------------
+-- SP: altaHistorial (reemplaza al anterior)
+-- -----------------------------------------
+if exists (select 1 from sys.objects where object_id = object_id('PnSPtrans.altaHistorial'))
+    drop procedure PnSPtrans.altaHistorial;
+go
+create procedure PnSPtrans.altaHistorial
+    @Guardaparque int,
+    @parque int,
+    @fechaIni date,
+    @fechaFin date,
+    @razon varchar(40)
+with execute as owner
+as
+begin
+    declare @IDout table(ID int)
+
+    begin transaction
+    begin try
+        open symmetric key SymKey_DatosSensibles
+            decryption by certificate CertColumnas_Pn;
+
+        insert into PnTablas.Historial (FechaInicio, FechaEgreso, RazonEgreso)
+        output inserted.IDregistro into @IDout(ID)
+        values (@fechaIni, @fechaFin, @razon)
+
+        insert into PnTablas.TieneHistorial (Parque, Guardaparque, Registro, RazonEgreso_Cifrada)
+        values (
+            @parque,
+            @Guardaparque,
+            (select ID from @IDout),
+            encryptbykey(key_guid('SymKey_DatosSensibles'), convert(varbinary, @razon))
+        )
+
+        close symmetric key SymKey_DatosSensibles;
+        commit transaction
+    end try
+    begin catch
+        if symkeyproperty(key_id('SymKey_DatosSensibles'), 'IsOpen') = 1
+            close symmetric key SymKey_DatosSensibles;
+        if @@trancount > 0
+            rollback transaction;
+
+        declare @Msg nvarchar(500) = error_message();
+        declare @Num int = error_number();
+        print concat('ERROR (', @Num, '): ', @Msg);
+    end catch
+end;
+go
+print '   -- SP altaHistorial actualizado con cifrado.';
+go
+
+-- ---------------------------------------------
+-- SP consultarHistorial — descifra RazonEgreso
+-- ---------------------------------------------
+if exists (select 1 from sys.objects where object_id = object_id('PnSPtrans.consultarHistorial'))
+    drop procedure PnSPtrans.consultarHistorial;
+go
+create procedure PnSPtrans.consultarHistorial
+    @Guardaparque int = null
+as
+begin
+    open symmetric key SymKey_DatosSensibles
+        decryption by certificate CertColumnas_Pn;
+
+    select
+        h.IDregistro,
+        th.Guardaparque,
+        th.Parque,
+        h.FechaInicio,
+        h.FechaEgreso,
+        convert(varchar(40), decryptbykey(th.RazonEgreso_Cifrada)) as RazonEgreso
+    from PnTablas.Historial h
+    join PnTablas.TieneHistorial th on th.Registro = h.IDregistro
+    where (@Guardaparque is null or th.Guardaparque = @Guardaparque)
+    order by h.FechaInicio desc;
+
+    close symmetric key SymKey_DatosSensibles;
+end;
+go
+print '   -- SP consultarHistorial creado.';
+go
+
+print '== Cifrado: script completado ==';
+go

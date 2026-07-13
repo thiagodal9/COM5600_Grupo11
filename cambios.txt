@@ -1,0 +1,108 @@
+----CAMBIOS (desarrollo comenzo basado en la version 2 del DER)
+----------------------------------------------------------------------------------------
+SPs TipoEntrada/Entrada
+--Agregadas validaciones de datos de entrada, control de duplicidad y control de referencias
+--Eliminadas transacciones, no hacen falta a no ser que se este operando sobre
+varias tablas simultaneamente o la operacion sea critica.
+--Ajustado el SP para modificar la entrada a que solo se pueda modificar el precio, el resto
+de los campos deberian no poder modificarse
+
+Tabla Venta
+--Cambiar fechaPago a fechaHora con tipo DATETIME para reflejar mas correctamente una
+boleta de pago
+--Eliminado campo Venta INT de PagoVenta. Quedo de la version anterior cuando estaba la tabla Venta
+--Agregadas validaciones de datos de entrada, control de duplicidad y control de referencias
+--Eliminado SP modificacion de PagoVenta. No tiene mucho sentido modificar algo de un pago ya confirmado
+--Ahora bajaVenta tambien baja en las tablas Posee y Tiene
+--Cambiados nombres de tablas a como aparecen en el script tablasBase para evitar conflictos
+con otros scripts
+--Donde no es necesario, se eliminaron validaciones porque los datos de entrada al SP
+los provee un SP superior
+--Se agrego el campo FechaAcceso a altaVentaEntrada para correctamente reflejar la
+totalidad de la entidad
+--Se cambio bajaVentaEntrada por un SP que "limpia" la tabla temporal y la deja
+lista para otra serie de pedidos
+--Mismo proceder con #ventaEntradas
+
+SPs de Venta
+--Agregados SPs para manejar las ventas de entradas y actividades
+----------------------------------------------------------------------------------------
+Se desarrolló el script maestro OrdenDeCreacion.sql para estructurar y documentar el despliegue de la base de datos desde cero. Al requerir el uso del Modo SQLCMD, este archivo automatiza la ejecución secuencial de los scripts individuales respetando la jerarquía de las dependencias debido a las claves foráneas. Esta implementación evita errores de referencias cruzadas.
+
+Para reflejar fielmente el DER, se eliminó la tabla intermedia TieneHistorial. En su lugar, se modifico la tabla Historial, incorporando directamente en ella las claves foráneas correspondientes a Guardaparque y Parque.
+
+Se agregó el campo HoraInicio a la clave primaria, quedando PRIMARY KEY(Actividad, FechaActividad, HoraInicio). Para permitir que una misma actividad (por ejemplo, una excursión) pueda dictarse en distintos horarios durante un mismo día. Con la clave anterior, se bloqueaba la inserción de un segundo turno en la misma fecha.
+
+Se cambiaron los campos de texto de longitud variable (como DescripcionAct, Titulo, RazonEgreso) de CHAR a VARCHAR.
+Se aumentó la capacidad del campo NombreParque (VARCHAR(100)). Existen parques nacionales reales con nombres extensos, los cuales habrían hecho fallar los procesos de inserción si el límite se mantenía en 30 caracteres.
+Se agrego el esquema PnSPabm a asignarEspecialidad, desasignarEspecialidad, desasignarEspecialidades y reasignarEspecialidad.
+Correcion de “IF( (@temporada != 'Verano') OR (@temporada != 'Invierno') OR (@temporada != 'Otoño') OR (@temporada != 'Primavera'))” por  “IF (@temporada NOT IN ('Verano', 'Invierno', 'Otoño', 'Primavera'))” en altahorario.
+Correciones menores y de sintaxis.
+
+Observaciones (Posibles cambios)
+Asignación de guías en la tabla Actividad:
+Actualmente, el campo guia es una clave foránea en la tabla Actividad. Se asume que una actividad genérica le pertenece a un único guía de forma estática. Probablemente se debería registrar qué guía participa en cada tour, mover esta asignación a la tabla HorarioActividad, la instancia específica del tour. Esto permitiría que distintos guías tomen diferentes turnos de la misma actividad.
+
+Consideraciones sobre el Cifrado de Datos (Entrega 8):
+El proyecto exige aplicar cifrado a los datos sensibles, El campo DNI en la tabla Persona seria el candidato para esto. Actualmente, DNI está definido como INT NOT NULL UNIQUE. Si más se cifra esta columna (lo que requieriria cambiar el tipo de dato a VARBINARY), hay que tener en cuenta que las funciones de cifrado de SQL Server pueden generar resultados diferentes para un mismo valor de entrada. Esto romperia la validación del constraint UNIQUE nativo, por lo que la validación de duplicados deberá manejarse con una estrategia distinta (por ejemplo, mediante una columna de hash complementaria o directamente en la lógica del procedimiento almacenado).
+
+Modificacion 22/06/2026: 
+Implementacion del cifrado, roles y politica de seguridad. Imlementacion de constraint UQ_Persona_DNI en tabla persona para que los scripts de migración funcionen correctamente, sin esto SQL Server genera uno aleatorio cada que se corre el create y el script de cifrado fallaria al intentar buscar una restricción que ya no se llama igual.
+----------------------------------------------------------------------------------------
+--Leandro
+*Revision/Correccion/Finalizacion de script de testing para SPabm de tablas Actividad
+\Se corrigio el codigo en varios SP y en la creacion de algunas tablas
+\\Se sumaron los datos de entrada para pruebas al script de Dataset_testing
+
+*Agregado de SPs para limpieza de registros para tablas PagoVenta/TieneHActividad
+
+*Se hizo una modificacion menor al codigo de la app
+----------------------------------------------------------------------------------------
+--Maximo
+Se añadieron los bloques para la inserción de los 20 Guias, 20 Guardaparques y 10 Concesiones,
+Se actualizaron los parámetros de llamada para coincidir con las firmas corregidas en CreacionSPabmActividad.sql.
+Sustitución de IDs fijos por búsqueda dinámica. Se eliminó la dependencia de IDs numéricos estáticos como 1 o 2.
+Se añadió un control lógico que verifica si los IDs fueron encontrados antes de intentar la inserción.
+Se eliminó cualquier inserción directa a tablas de transacciones.
+Correciones menores de nombres incorrectos y de sintaxis.
+----------------------------------------------------------------------------------------
+--Leandro
+*Se modifico la tabla Persona.
+\Se quito el check en campo Rol porque se hace verificacion dentro de los SP.
+\\Se aumento el tam a varchar(12) porque no entraba 'Guardaparque', resultando en que fallara el alta.
+\\\Se hicieron las modificaciones adecuadas en los SP que corresponden.
+
+*Se modifico la tabla Especialidad.
+\Se quitaron los constraints sobre campo DescripcionEspecialidad porque se hace verificacion dentro de los SP y,
+\ademas, presentaba comportamiento raro al ordenar los registros tras insercion.
+
+*Se partio la tabla TieneHistorial (en Historial y TieneHistorial) para ajustarse al diseño del DER.
+\SPs de manejo de historial se movieron a SPtransPersona para que se manipulen ambos simultaneamente ante cualquier operacion.
+\\Se hicieron las modificaciones adecuadas en los SP que corresponden.
+
+*Ajustes generales en varios SP
+----------------------------------------------------------------------------------------
+--Maximo
+Se reescribió Cifrado.sql para que el cifrado de RazonEgreso se aplique sobre PnSPtrans.altaHistorial yPnSPtrans.consultarHistorial, en vez 
+de recrear una versión desactualizada en PnSPabm que asumía columnas (Guardaparque, Parque, RazonEgreso_Cifrada), tambien se corrigieron errores
+debido al cambio de nombre de ciertas columnas debido al cifrado.
+
+Se corrigio un bugs en modificacionGuia que chequeaba @numeroHabilitacionNuevo en vez de @vencimientoHabilitacionNuevo antes de validar
+la fecha de vencimiento) y se agregó el prefijo de schema faltante en la llamada a desasignarEspecialidades dentro de bajaGuia.
+
+Se agrego los testing de consecion, persona, entrada, venta. 
+----------------------------------------------------------------------------------------
+--Maximo
+Se corrigio sintaxis en abm consecion, se agrego mas datos en dataset y un script para la limpieza de los mismos
+
+Se aumento el tam de rol a varchar(15), ya que fallaba el alta.
+
+Se documenta correctamente el orden de ejecucion de los scripts
+
+Se implementa la generacion de reportes y testing del mismo
+----------------------------------------------------------------------------------------
+--Leandro
+*Se agrego un script con la creacion de varios SP para cubrir requisitos de funcionalidad del proyecto 
+asi como tambien un script de testing del mismo
+*Se modifico la condicion de control de fechas en altaConcesion para atrapar el caso de una alta de concesion vencida
+como se pide en la lista de casos obligatorios
