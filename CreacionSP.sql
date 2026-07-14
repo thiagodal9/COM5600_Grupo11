@@ -306,3 +306,50 @@ END;
 GO
 PRINT '--Creado SP: verHistorialGuardaparque--';
 GO
+
+/*
+================================================================
+Temp Tablas
+================================================================
+*/
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.crearTempEntradas'))
+    DROP PROCEDURE PnSP.crearTempEntradas
+GO
+CREATE PROCEDURE PnSP.crearTempEntradas
+AS
+BEGIN
+	--Tabla #ventaEntradas
+	IF OBJECT_ID('tempdb..#ventaEntradas') IS NULL
+	BEGIN
+		CREATE TABLE #ventaEntradas
+		(
+			IDvEntrada INT IDENTITY(1, 1) PRIMARY KEY,
+			Entrada INT,
+			Cantidad INT,
+			FechaAcceso DATE,
+			ID INT
+		)
+	END
+END;
+GO
+
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.crearTempActividades'))
+    DROP PROCEDURE PnSP.crearTempActividades
+GO
+CREATE PROCEDURE PnSP.crearTempActividades
+AS
+BEGIN
+	IF OBJECT_ID('tempdb..#ventaActividades') IS NULL
+	BEGIN
+		CREATE TABLE #ventaActividades
+		(
+			IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
+			Actividad INT,
+			FechaActividad DATE,
+			HoraInicio TIME,
+			Cantidad INT,
+			ID INT
+		)
+	END
+END;
+GO

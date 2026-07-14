@@ -106,37 +106,3 @@ BEGIN
 	PRINT '--Creada Tabla: TieneHActividad--'
 END;
 GO
-
-PRINT '--Creando tablas de apoyo...';
-GO
-
---Tabla #ventaEntradas
-IF OBJECT_ID('tempdb..#ventaEntradas') IS NULL
-BEGIN
-	CREATE TABLE #ventaEntradas
-	(
-		IDvEntrada INT IDENTITY(1, 1) PRIMARY KEY,
-		Entrada INT,
-		Cantidad INT,
-		FechaAcceso DATE,
-		ID INT
-	)
-	PRINT '--Creada Tabla: #ventaEntradas--'
-END;
-GO
-
---Tabla #ventaActividades
-IF OBJECT_ID('tempdb..#ventaActividades') IS NULL
-BEGIN
-	CREATE TABLE #ventaActividades
-	(
-		IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
-		Actividad INT,
-		FechaActividad DATE,
-		HoraInicio TIME,
-		Cantidad INT,
-		ID INT
-	)
-	PRINT '--Creada Tabla: #ventaActividades--'
-END;
-GO
