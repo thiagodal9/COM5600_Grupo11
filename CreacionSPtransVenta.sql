@@ -26,10 +26,10 @@ abm PagoVenta
 ================================================================
 */
 --Baja
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.bajaVenta'))
-    DROP PROCEDURE PnSPabm.bajaVenta
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.bajaVenta'))
+    DROP PROCEDURE PnSPtrans.bajaVenta
 GO
-create procedure PnSPabm.bajaVenta
+create procedure PnSPtrans.bajaVenta
 @idPagoVenta int
 as
 begin
@@ -77,10 +77,10 @@ Compra de Entradas
 */
 -------------------------------------------------------------------------------------
 --apilar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarEntradas'))
-    DROP PROCEDURE PnSPabm.reservarEntradas
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.reservarEntradas'))
+    DROP PROCEDURE PnSPtrans.reservarEntradas
 GO
-CREATE PROCEDURE PnSPabm.reservarEntradas (@entrada INT, @cantidad INT, @fecha DATE)
+CREATE PROCEDURE PnSPtrans.reservarEntradas (@entrada INT, @cantidad INT, @fecha DATE)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -117,10 +117,25 @@ BEGIN
  
 	IF(@errorCount = 0)
 	BEGIN
-		IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
-			EXECUTE PnSPabm.modificarVentaEntradas @entrada = @entrada, @cantidadNEW = @cantidad, @fechaAcceso = @fecha
-		ELSE
-			EXECUTE PnSPabm.altaVentaEntradas @Entrada = @entrada, @Cantidad = @cantidad, @FechaAcceso = @fecha
+		BEGIN TRANSACTION
+		BEGIN TRY
+			EXECUTE PnSP.crearTempEntradas;
+
+			IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
+				EXECUTE PnSPabm.modificarVentaEntradas @entrada = @entrada, @cantidadNEW = @cantidad, @fechaAcceso = @fecha
+			ELSE
+				EXECUTE PnSPabm.altaVentaEntradas @Entrada = @entrada, @Cantidad = @cantidad, @FechaAcceso = @fecha
+
+			COMMIT TRANSACTION
+		END TRY
+		BEGIN CATCH
+			IF @@TRANCOUNT > 0
+				ROLLBACK TRANSACTION;
+
+			DECLARE @Msg NVARCHAR(500) = ERROR_MESSAGE();
+			DECLARE @Num INT           = ERROR_NUMBER();
+			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
+		END CATCH
 	END
 	ELSE
 		PRINT @errorLine
@@ -197,12 +212,14 @@ BEGIN
 							ON (tE.Entrada = E.IDEntrada)
 						 ) AS t)
 
+			/*
 			IF(@moneda LIKE 'Dolar')
 			BEGIN
 				--conversion del total a moneda
 			END
 
 			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
+			*/
 
 			SET @fechaHoraT = GETDATE()
 
@@ -249,10 +266,10 @@ Venta de Actividades
 */
 -------------------------------------------------------------------------------------
 --apilar compra
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.reservarActividad'))
-    DROP PROCEDURE PnSPabm.reservarActividad
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.reservarActividad'))
+    DROP PROCEDURE PnSPtrans.reservarActividad
 GO
-CREATE PROCEDURE PnSPabm.reservarActividad (@actividad INT, @cantidad INT, @fecha DATE, @hora TIME)
+CREATE PROCEDURE PnSPtrans.reservarActividad (@actividad INT, @cantidad INT, @fecha DATE, @hora TIME)
 AS
 BEGIN
 	DECLARE @errorCount INT
@@ -303,10 +320,25 @@ BEGIN
 
 	IF(@errorCount = 0)
 	BEGIN
-		IF EXISTS(SELECT 1 FROM #ventaActividades WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
-			EXECUTE PnSPabm.modificarVentaActividades @actividad = @actividad, @fechaActividad = @fecha, @horaInicio = @hora, @cantidadNew = @cantidad
-		ELSE
-			EXECUTE PnSPabm.altaVentaActividades @actividad = @actividad, @fechaActividad = @fecha, @HoraInicio = @hora, @cantidad = @cantidad
+		BEGIN TRANSACTION
+		BEGIN TRY
+			EXECUTE PnSP.crearTempActividades;
+
+			IF EXISTS(SELECT 1 FROM #ventaActividades WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
+				EXECUTE PnSPabm.modificarVentaActividades @actividad = @actividad, @fechaActividad = @fecha, @horaInicio = @hora, @cantidadNew = @cantidad
+			ELSE
+				EXECUTE PnSPabm.altaVentaActividades @actividad = @actividad, @fechaActividad = @fecha, @HoraInicio = @hora, @cantidad = @cantidad
+		
+			COMMIT TRANSACTION
+		END TRY
+		BEGIN CATCH
+			IF @@TRANCOUNT > 0
+				ROLLBACK TRANSACTION;
+
+			DECLARE @Msg NVARCHAR(500) = ERROR_MESSAGE();
+			DECLARE @Num INT           = ERROR_NUMBER();
+			PRINT CONCAT('ERROR (', @Num, '): ', @Msg);
+		END CATCH
 	END
 	ELSE
 		PRINT @errorLine
@@ -419,12 +451,14 @@ BEGIN
 							ON (tL.Actividad = CAct.IDActividad)
 						) AS t)
 
+			/*
 			IF(@moneda LIKE 'Dolar')
 			BEGIN
 				--conversion de moneda
 			END
 
 			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
+			*/
 
 			SET @fechaHoraT = GETDATE()
 
