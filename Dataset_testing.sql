@@ -547,16 +547,16 @@ AND EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.
 BEGIN
 	--Venta 1: Entrada 1 (Parque 1, General)
 	EXECUTE PnSPabm.reservarEntradas @entrada = 1, @cantidad = 15, @fecha = '2026-08-15';
-	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Efectivo';
+	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Efectivo', @moneda = 'Dolar';
 
 	--Venta 2: Entradas 3 y 4 en un mismo ticket
 	EXECUTE PnSPabm.reservarEntradas @entrada = 3, @cantidad = 20, @fecha = '2026-08-16';
 	EXECUTE PnSPabm.reservarEntradas @entrada = 4, @cantidad = 5,  @fecha = '2026-08-16';
-	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Tarjeta';
+	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Tarjeta', @moneda = 'Peso';
 
 	--Venta 3: Entrada 19 (Parque 10, General)
 	EXECUTE PnSPabm.reservarEntradas @entrada = 19, @cantidad = 8, @fecha = '2026-09-01';
-	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Efectivo';
+	EXECUTE PnSPtrans.confirmarCompraE @metodo = 'Efectivo', @moneda = 'Peso';
 END;
 GO
 
@@ -565,7 +565,7 @@ AND EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.
 BEGIN
 	--Caso obligatorio: tour con cupo completo
 	EXECUTE PnSPabm.reservarActividad @actividad = 6, @cantidad = 8, @fecha = '2026-11-15', @hora = '09:00';
-	EXECUTE PnSPtrans.confirmarCompraA @metodo = 'Efectivo';
+	EXECUTE PnSPtrans.confirmarCompraA @metodo = 'Efectivo', @moneda = 'Peso';
 END;
 GO
 
@@ -580,6 +580,6 @@ IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.res
 AND EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPtrans.confirmarCompraA'))
 BEGIN
 	EXECUTE PnSPabm.reservarActividad @actividad = 8, @cantidad = 4, @fecha = '2026-11-20', @hora = '10:00';
-	EXECUTE PnSPtrans.confirmarCompraA @metodo = 'Tarjeta';
+	EXECUTE PnSPtrans.confirmarCompraA @metodo = 'Tarjeta', @moneda = 'Dolar';
 END;
 GO
