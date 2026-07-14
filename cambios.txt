@@ -103,6 +103,10 @@ Se implementa la generacion de reportes y testing del mismo
 ----------------------------------------------------------------------------------------
 --Leandro
 *Se agrego un script con la creacion de varios SP para cubrir requisitos de funcionalidad del proyecto 
-asi como tambien un script de testing del mismo
+\asi como tambien un script de testing del mismo
 *Se modifico la condicion de control de fechas en altaConcesion para atrapar el caso de una alta de concesion vencida
-como se pide en la lista de casos obligatorios
+\como se pide en la lista de casos obligatorios
+----------------------------------------------------------------------------------------
+--Leandro
+*Se movio la creacion de tablas temporales a justo antes de comenzar una reserva de actividad/entrada de manera de que se
+\cree para cada sesion nueva correctamente al realizar operaciones de compra.
