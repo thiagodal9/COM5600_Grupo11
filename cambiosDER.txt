@@ -34,9 +34,13 @@ solo los periodos de actividad de un individuo sino tambien donde realizo dicha 
 a ser una entidad fuerte.
 
 ----------------------------------------------------------------------------------------
---Version 5 (F)
+--Version 5
 *Se movio la relacion de Guia-Actividad a Guia-HorarioActividad para reflejar el caso real donde un guia puede estar asignado
 a un determinado horario de una determinada actividad y no solo pertenecer a una actividad especifica.
 
 *Agregado de atributos que no estaban presentes en versiones anteriores y otras modificaciones menores relacionados a cambios
 durante la etapa de desarrollo.
+
+----------------------------------------------------------------------------------------
+--Version 6 (F)
+*Se agregaron atributos a la entidad Parque, producto de la implementacion de uso de APIs en el sistema.
