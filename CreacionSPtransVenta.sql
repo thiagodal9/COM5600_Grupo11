@@ -164,6 +164,10 @@ AS
 BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
+	DECLARE @PrecioDolar DECIMAL(18,2)
+	DECLARE @Lluvia BIT
+	DECLARE @Latitud VARCHAR(20) 
+    DECLARE @Longitud VARCHAR(20)
 
 	DECLARE @total DECIMAL(10, 2)
 	DECLARE @fechaHoraT DATETIME
@@ -212,14 +216,12 @@ BEGIN
 							ON (tE.Entrada = E.IDEntrada)
 						 ) AS t)
 
-			/*
 			IF(@moneda LIKE 'Dolar')
 			BEGIN
-				--conversion del total a moneda
-			END
+				EXEC PnSPapi.ObtenerCotizacionDolar @ValorVentaDolar = @PrecioDolar OUTPUT;
 
-			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
-			*/
+				SET @total = @total / @PrecioDolar
+			END
 
 			SET @fechaHoraT = GETDATE()
 
@@ -451,14 +453,12 @@ BEGIN
 							ON (tL.Actividad = CAct.IDActividad)
 						) AS t)
 
-			/*
 			IF(@moneda LIKE 'Dolar')
 			BEGIN
-				--conversion de moneda
-			END
+				EXEC PnSPapi.ObtenerCotizacionDolar @ValorVentaDolar = @PrecioDolar OUTPUT;
 
-			--modificacion del total segun el tiempo (si hay mal tiempo, 50% de descuento, por ejemplo)
-			*/
+				SET @total = @total / @PrecioDolar
+			END
 
 			SET @fechaHoraT = GETDATE()
 

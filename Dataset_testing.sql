@@ -71,16 +71,16 @@ EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PnTablas' 
 AND
 EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSPabm.altaParque'))
 BEGIN
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Iguazu', @ubicacion = 1, @Superficie = 2000, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Pochoclo', @ubicacion = 10, @Superficie = 1500, @tipo = 2;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Belgrano', @ubicacion = 8, @Superficie = 3500, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Nahuel Huapi', @ubicacion = 5, @Superficie = 7050, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Los Glaciares', @ubicacion = 2, @Superficie = 7269, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque El Palmar', @ubicacion = 3, @Superficie = 8500, @tipo = 2;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Lanin', @ubicacion = 6, @Superficie = 4127, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Los Alerces', @ubicacion = 5, @Superficie = 2630, @tipo = 1;
-	EXECUTE PnSPabm.altaParque @nombre = 'Reserva Costanera Sur', @ubicacion = 3, @Superficie = 350, @tipo = 3;
-	EXECUTE PnSPabm.altaParque @nombre = 'Parque Chaco', @ubicacion = 4, @Superficie = 1500, @tipo = 2;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Iguazu', @ubicacion = 1, @latitud = '45.67', @longitud = '20.56', @Superficie = 2000, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Pochoclo', @ubicacion = 10, @latitud = '35.67', @longitud = '20.55',@Superficie = 1500, @tipo = 2;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Belgrano', @ubicacion = 8, @latitud = '26.77', @longitud = '45.78',@Superficie = 3500, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Nahuel Huapi', @ubicacion = 5, @latitud = '54.54', @longitud = '56.20',@Superficie = 7050, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Los Glaciares', @ubicacion = 2, @latitud = '25.87', @longitud = '31.35',@Superficie = 7269, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque El Palmar', @ubicacion = 3, @latitud = '55.55', @longitud = '51.52',@Superficie = 8500, @tipo = 2;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Lanin', @ubicacion = 6, @latitud = '44.22', @longitud = '20.16',@Superficie = 4127, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Los Alerces', @ubicacion = 5, @latitud = '34.85', @longitud = '23.34',@Superficie = 2630, @tipo = 1;
+	EXECUTE PnSPabm.altaParque @nombre = 'Reserva Costanera Sur', @ubicacion = 3, @latitud = '56.41', @longitud = '35.64',@Superficie = 350, @tipo = 3;
+	EXECUTE PnSPabm.altaParque @nombre = 'Parque Chaco', @ubicacion = 4, @latitud = '41.23', @longitud = '45.52',@Superficie = 1500, @tipo = 2;
 END;
 ELSE
 	PRINT '--No se pudo cargar datos en tabla Parque--';

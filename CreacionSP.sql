@@ -353,3 +353,51 @@ BEGIN
 	END
 END;
 GO
+
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+----SP de API
+--verClimaEnParque
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.verClimaParque'))
+    DROP PROCEDURE PnSP.verClimaParque
+GO
+CREATE PROCEDURE PnSP.verClimaParque (@parque INT)
+AS
+BEGIN
+	DECLARE @errorCount INT
+
+	DECLARE @TempActual DECIMAL(5,2);
+	DECLARE @Lluvia BIT
+	DECLARE @EstadoClima VARCHAR(50)
+	DECLARE @Latitud VARCHAR(20)
+    DECLARE @Longitud VARCHAR(20)
+
+	SET @errorCount = 0
+
+	IF( (@parque IS NULL) OR (@parque <= 0) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Parque invalido.'
+	END
+
+	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @parque) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Parque inexistente.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		SET @Latitud = (SELECT Latitud FROM PnTablas.Parque WHERE IDParque = @parque)
+		SET @Longitud = (SELECT Longitud FROM PnTablas.Parque WHERE IDParque = @parque)
+
+		EXEC PnSPapi.ObtenerClimaActual @Latitud = @Latitud, @Longitud = @Longitud, @EsLluvioso = @Lluvia OUTPUT
+
+		IF @Lluvia = 1 SET @EstadoClima = 'Jornada Lluviosa'; ELSE SET @EstadoClima = 'Condiciones Favorables'
+
+		SELECT 
+			@TempActual AS [Temperatura Actual (°C)],
+			@EstadoClima AS [Estado del Clima]
+	END
+END;
+GO
