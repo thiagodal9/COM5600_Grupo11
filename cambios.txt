@@ -107,6 +107,8 @@ Se implementa la generacion de reportes y testing del mismo
 *Se modifico la condicion de control de fechas en altaConcesion para atrapar el caso de una alta de concesion vencida
 \como se pide en la lista de casos obligatorios
 ----------------------------------------------------------------------------------------
---Leandro
-*Se movio la creacion de tablas temporales a justo antes de comenzar una reserva de actividad/entrada de manera de que se
-\cree para cada sesion nueva correctamente al realizar operaciones de compra.
+--Leandro/Agustin
+*Se completo la implementacion de manejo de APIs y exportacion a archivos para procesamiento de resultados obtenidos por medio del
+\uso de una plataforma BI.
+*Se aplicaron cambios sobre tablas y SPs segun fue necesario para acomodar la implementacion de las funcionalidades
+\anteriormente mencionadas.

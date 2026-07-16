@@ -109,7 +109,7 @@ BEGIN
 	END
  
 	--controlExistencia
-	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.TipoEntrada WHERE IDTipoEntrada = @entrada) )
+	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Entrada WHERE IDEntrada = @entrada) )
 	BEGIN
 		SET @errorCount = @errorCount + 1
 		SET @errorLine = @errorLine + CHAR(13) + '- Entrada inexistente.'
@@ -119,7 +119,6 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
-			EXECUTE PnSP.crearTempEntradas;
 
 			IF EXISTS(SELECT 1 FROM #ventaEntradas WHERE Entrada = @entrada AND FechaAcceso = @fecha)
 				EXECUTE PnSPabm.modificarVentaEntradas @entrada = @entrada, @cantidadNEW = @cantidad, @fechaAcceso = @fecha
@@ -324,7 +323,6 @@ BEGIN
 	BEGIN
 		BEGIN TRANSACTION
 		BEGIN TRY
-			EXECUTE PnSP.crearTempActividades;
 
 			IF EXISTS(SELECT 1 FROM #ventaActividades WHERE Actividad = @actividad AND FechaActividad = @fecha AND HoraInicio = @hora)
 				EXECUTE PnSPabm.modificarVentaActividades @actividad = @actividad, @fechaActividad = @fecha, @horaInicio = @hora, @cantidadNew = @cantidad
@@ -370,6 +368,7 @@ BEGIN
 	DECLARE @errorCount INT
 	DECLARE @errorLine varchar(100)
 
+	DECLARE @PrecioDolar DECIMAL(18,2)
 	DECLARE @total DECIMAL(10, 2)
 	DECLARE @fechaHoraT DATETIME
 	DECLARE @id INT
