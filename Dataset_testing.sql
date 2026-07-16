@@ -483,8 +483,11 @@ BEGIN
 	EXECUTE PnSPtrans.altaConcesion @idEmpresa = 2, @idParque = 8,  @rubro = 'Excursiones', @fechaInicio = @iniV8, @fechaFin = @finV8, @precioAlquiler = 175000.00
 
 	--Vencidas (Concesion 9-10)
-	EXECUTE PnSPtrans.altaConcesion @idEmpresa = 3, @idParque = 9,  @rubro = 'Souvenirs',   @fechaInicio = @iniVenc1, @fechaFin = @finVenc1, @precioAlquiler = 40000.00
-	EXECUTE PnSPtrans.altaConcesion @idEmpresa = 4, @idParque = 10, @rubro = 'Alojamiento', @fechaInicio = @iniVenc2, @fechaFin = @finVenc2, @precioAlquiler = 220000.00
+	--Se fuerzan estos registros porque los SP verifican y resguardan contra insercion de concesiones vencidas
+	insert into PnTablas.Concesion(Empresa, Parque, Rubro, FechaInicioConcesion, FechaFinConcesion, CostoAlquiler) 
+	values (3, 9, 'Souvenirs', @iniVenc1, @finVenc1, 40000.00)
+	insert into PnTablas.Concesion(Empresa, Parque, Rubro, FechaInicioConcesion, FechaFinConcesion, CostoAlquiler) 
+	values (4, 10, 'Alojamiento', @iniVenc2, @finVenc2, 220000.00)
 END;
 ELSE
 	PRINT '--No se pudo cargar datos en tabla Concesion--';
