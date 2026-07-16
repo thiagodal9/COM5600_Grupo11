@@ -54,6 +54,14 @@ BEGIN
 END;
 GO
 
+----Creacion de Schema para SPapi
+IF NOT EXISTS (SELECT name FROM sys.schemas WHERE name = 'PnSPapi')
+BEGIN
+	EXECUTE('CREATE SCHEMA PnSPapi')
+	PRINT '--Creado Schema: PnSPapi--'
+END;
+GO
+
 ----Creacion de Schema para otros SP
 IF NOT EXISTS (SELECT name FROM sys.schemas WHERE name = 'PnSP')
 BEGIN

@@ -58,9 +58,10 @@ BEGIN
 		IDParque INT IDENTITY(1, 1) PRIMARY KEY,
 		NombreParque varchar(100),
 		Ubicacion INT,
+		Latitud varchar(20), 
+		Longitud varchar(20),
 		Superficie INT,
 		Tipo INT,
-
 		FOREIGN KEY(Ubicacion) REFERENCES PnTablas.Provincia(IDProv),
 		FOREIGN KEY(Tipo) REFERENCES PnTablas.TipoParque(IDTipoParque)
 	)
