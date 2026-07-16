@@ -307,49 +307,206 @@ GO
 PRINT '--Creado SP: verHistorialGuardaparque--';
 GO
 
-/*
-================================================================
-Temp Tablas
-================================================================
-*/
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.crearTempEntradas'))
-    DROP PROCEDURE PnSP.crearTempEntradas
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+----SP de API
+--verClimaEnParque
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.verClimaParque'))
+    DROP PROCEDURE PnSP.verClimaParque
 GO
-CREATE PROCEDURE PnSP.crearTempEntradas
+CREATE PROCEDURE PnSP.verClimaParque (@parque INT)
 AS
 BEGIN
-	--Tabla #ventaEntradas
-	IF OBJECT_ID('tempdb..#ventaEntradas') IS NULL
+	DECLARE @errorCount INT
+
+	DECLARE @TempActual DECIMAL(5,2);
+	DECLARE @Lluvia BIT
+	DECLARE @EstadoClima VARCHAR(50)
+	DECLARE @Latitud VARCHAR(20)
+    DECLARE @Longitud VARCHAR(20)
+
+	SET @errorCount = 0
+
+	IF( (@parque IS NULL) OR (@parque <= 0) )
 	BEGIN
-		CREATE TABLE #ventaEntradas
-		(
-			IDvEntrada INT IDENTITY(1, 1) PRIMARY KEY,
-			Entrada INT,
-			Cantidad INT,
-			FechaAcceso DATE,
-			ID INT
-		)
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Parque invalido.'
+	END
+
+	IF( (@errorCount = 0) AND NOT EXISTS(SELECT 1 FROM PnTablas.Parque WHERE IDParque = @parque) )
+	BEGIN
+		SET @errorCount = @errorCount + 1
+		PRINT 'ERROR: Parque inexistente.'
+	END
+
+	IF(@errorCount = 0)
+	BEGIN
+		SET @Latitud = (SELECT Latitud FROM PnTablas.Parque WHERE IDParque = @parque)
+		SET @Longitud = (SELECT Longitud FROM PnTablas.Parque WHERE IDParque = @parque)
+
+		EXEC PnSPapi.ObtenerClimaActual @Latitud = @Latitud, @Longitud = @Longitud, @EsLluvioso = @Lluvia OUTPUT
+
+		IF @Lluvia = 1 SET @EstadoClima = 'Jornada Lluviosa'; ELSE SET @EstadoClima = 'Condiciones Favorables'
+
+		SELECT 
+			@TempActual AS [Temperatura Actual (°C)],
+			@EstadoClima AS [Estado del Clima]
 	END
 END;
 GO
 
-IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.crearTempActividades'))
-    DROP PROCEDURE PnSP.crearTempActividades
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+----SP de reportes
+
+--Reporte de visitas por semana, mes y año, por parque. Devuelve un .xml fisico.
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptVisitasPorPeriodoXML'))
+	DROP PROCEDURE PnSP.rptVisitasPorPeriodoXML
 GO
-CREATE PROCEDURE PnSP.crearTempActividades
+CREATE PROCEDURE PnSP.rptVisitasPorPeriodoXML
 AS
 BEGIN
-	IF OBJECT_ID('tempdb..#ventaActividades') IS NULL
-	BEGIN
-		CREATE TABLE #ventaActividades
-		(
-			IDvActividad INT IDENTITY(1, 1) PRIMARY KEY,
-			Actividad INT,
-			FechaActividad DATE,
-			HoraInicio TIME,
-			Cantidad INT,
-			ID INT
-		)
-	END
+    SET NOCOUNT ON;
+	EXEC xp_cmdshell 'bcp "SELECT P.NombreParque AS [Parque],YEAR(PE.FechaAcceso) AS [Anio], MONTH(PE.FechaAcceso) AS [Mes],DATEPART(week, PE.FechaAcceso) AS [Semana], SUM(PE.Cantidad) AS [Visitas] FROM ParquesNacionales.PnTablas.Parque P INNER JOIN ParquesNacionales.PnTablas.Entrada E ON P.IDParque = E.Parque INNER JOIN ParquesNacionales.PnTablas.PoseeEntrada PE ON E.IDEntrada = PE.Entrada GROUP BY P.NombreParque, YEAR(PE.FechaAcceso), MONTH(PE.FechaAcceso), DATEPART(week, PE.FechaAcceso) ORDER BY NombreParque, Anio, Mes, Semana FOR XML PATH(''Visitas''), ROOT (''VisitasPeriodo'')" queryout "C:\Users\Usuario\Desktop\outputSQL\rptVisitas.xml" -T -c -t,'
 END;
+GO
+PRINT '--Creado SP: rptVisitasPorPeriodoXML--';
+GO
+
+--Ingresos por parque por semana, mes y año (entradas y concesiones)
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptIngresosTotales'))
+	DROP PROCEDURE PnSP.rptIngresosTotales
+GO
+CREATE PROCEDURE PnSP.rptIngresosTotales
+AS
+BEGIN
+    SET NOCOUNT ON;
+	WITH TodoElIngreso AS (
+		--Ingresos por Ventas de Entradas 
+		SELECT 
+			E.Parque AS IDParque, 
+			PV.FechaHoraTransaccion AS Fecha, 
+			(PE.Cantidad * E.Precio) AS Monto 
+		FROM PnTablas.PagoVenta PV
+		INNER JOIN PnTablas.PoseeEntrada PE ON PV.IDPagoVenta = PE.Pago
+		INNER JOIN PnTablas.Entrada E ON PE.Entrada = E.IDEntrada
+		
+		UNION ALL
+		
+		-- Ingresos por Pagos de Concesiones
+		SELECT 
+			C.Parque AS IDParque, 
+			HP.Vencimiento AS Fecha, 
+			HP.Importe AS Monto
+		FROM PnTablas.HistorialPago HP
+		INNER JOIN PnTablas.Concesion C ON HP.Concesion = C.IDConcesion
+		WHERE HP.Estado = 'Pago'
+	)
+	SELECT 
+		P.NombreParque AS NombreParque,
+		YEAR(I.Fecha) AS Anio,
+		MONTH(I.Fecha) AS Mes,
+		DATEPART(week, I.Fecha) AS Semana,
+		SUM(I.Monto) AS TotalIngresos
+	FROM PnTablas.Parque P
+	INNER JOIN TodoElIngreso I ON P.IDParque = I.IDParque
+	GROUP BY P.NombreParque, YEAR(I.Fecha), MONTH(I.Fecha), DATEPART(week, I.Fecha)
+	ORDER BY NombreParque, Anio, Mes, Semana;
+END;
+GO
+PRINT '--Creado SP: rptIngresosTotales--';
+GO
+
+
+--Deudores (Concesiones atrasadas, detallando meses y montos). Devuelve un hipervinculo.
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptConcesionesDeudorasXML'))
+	DROP PROCEDURE PnSP.rptConcesionesDeudorasXML
+GO
+CREATE PROCEDURE PnSP.rptConcesionesDeudorasXML
+AS
+BEGIN
+    SET NOCOUNT ON;
+	SELECT 
+		P.NombreParque AS 'Parque',
+		Emp.NombreEmpresa AS 'Titular',
+		C.Rubro AS 'Actividad',
+		C.CostoAlquiler AS 'CanonMensual',
+		COUNT(HP.IDPagoConcesion) AS 'MesesAtraso',
+		SUM(HP.Importe) AS 'MontoDeuda'
+	FROM PnTablas.Concesion C
+	INNER JOIN PnTablas.Empresa Emp ON C.Empresa = Emp.IDEmpresa
+	INNER JOIN PnTablas.Parque P ON C.Parque = P.IDParque
+	INNER JOIN PnTablas.HistorialPago HP ON C.IDConcesion = HP.Concesion
+	-- Filtra los pagos vencidos que no tienen estado 'Pago'
+	WHERE HP.Estado <> 'Pago' AND HP.Vencimiento < GETDATE()
+	GROUP BY P.NombreParque, Emp.NombreEmpresa, C.Rubro, C.CostoAlquiler
+	FOR XML PATH('Deudor'), ROOT('DeudoresAtrasados'), ELEMENTS;
+END;
+GO
+PRINT '--Creado SP: rptConcesionesDeudorasXML--';
+GO
+
+
+-- Matriz de visitas: Tabla cruzada mostrando visitas por mes y parque
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptMatrizVisitasPivot'))
+	DROP PROCEDURE PnSP.rptMatrizVisitasPivot
+GO
+CREATE PROCEDURE PnSP.rptMatrizVisitasPivot
+	@anio INT = NULL 
+AS
+BEGIN
+    SET NOCOUNT ON;
+	IF @anio IS NULL SET @anio = YEAR(GETDATE());
+
+	SELECT NombreParque, 
+		   ISNULL([1], 0) AS Ene, ISNULL([2], 0) AS Feb, ISNULL([3], 0) AS Mar, 
+		   ISNULL([4], 0) AS Abr, ISNULL([5], 0) AS May, ISNULL([6], 0) AS Jun, 
+		   ISNULL([7], 0) AS Jul, ISNULL([8], 0) AS Ago, ISNULL([9], 0) AS Sep, 
+		   ISNULL([10], 0) AS Oct, ISNULL([11], 0) AS Nov, ISNULL([12], 0) AS Dic
+	FROM (
+		SELECT 
+			P.NombreParque AS NombreParque, 
+			MONTH(PE.FechaAcceso) AS Mes, 
+			PE.Cantidad
+		FROM PnTablas.Parque P
+		INNER JOIN PnTablas.Entrada E ON P.IDParque = E.Parque
+		INNER JOIN PnTablas.PoseeEntrada PE ON E.IDEntrada = PE.Entrada
+		WHERE YEAR(PE.FechaAcceso) = @anio
+	) AS DatosOrigen
+	PIVOT (
+		SUM(Cantidad)
+		FOR Mes IN ([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12])
+	) AS TablaPivotada;
+END;
+GO
+PRINT '--Creado SP: rptMatrizVisitasPivot--';
+GO
+
+
+-- Parques y concesiones: Listado de parques y vector anidado. Devuelve un hipervinculo.
+IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptParquesConcesionesAnidadoXML'))
+	DROP PROCEDURE PnSP.rptParquesConcesionesAnidadoXML
+GO
+CREATE PROCEDURE PnSP.rptParquesConcesionesAnidadoXML
+AS
+BEGIN
+    SET NOCOUNT ON;
+	SELECT 
+		P.NombreParque AS '@NombreParque',
+		(
+			SELECT 
+				Emp.NombreEmpresa AS 'Titular',
+				C.FechaInicioConcesion AS 'FechaInicio',
+				C.FechaFinConcesion AS 'FechaFin',
+				C.Rubro AS 'ServicioPrestado'
+			FROM PnTablas.Concesion C
+			INNER JOIN PnTablas.Empresa Emp ON C.Empresa = Emp.IDEmpresa
+			WHERE C.Parque = P.IDParque
+			FOR XML PATH('Concesion'), TYPE
+		)
+	FROM PnTablas.Parque P
+	FOR XML PATH('Parque'), ROOT('ReporteParquesConcesiones');
+END;
+GO
+PRINT '--Creado SP: rptParquesConcesionesAnidadoXML--';
 GO

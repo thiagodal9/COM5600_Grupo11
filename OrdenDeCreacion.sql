@@ -54,28 +54,34 @@ Los archivos deben estar guardados en la misma carpeta que este script.
 -- Para que esto funcione automatizado se debería crear un .bat que le 
 -- diga a SQL Server dónde está parado antes de correr el script.
 
-:r CreacionInicial.sql
-:r CreacionTablasParque.sql
-:r CreacionTablasPersona.sql
-:r CreacionTablasActividad.sql
-:r CreacionTablasConcesion.sql
-:r CreacionTablasVenta.sql
-:r CreacionSP.sql
-:r CreacionSPabmParque.sql
-:r CreacionSPabmPersona.sql
-:r CreacionSPabmActividad.sql
-:r CreacionSPabmConcesion.sql
-:r CreacionSPabmEntrada.sql
-:r CreacionSPabmVenta.sql
-:r CreacionSPtransParque.sql
-:r CreacionSPtransPersona.sql
-:r CreacionSPtransConcesion.sql
-:r CreacionSPtransVenta.sql
-:r CreacionLoginUserApp.sql
-:r CreacionRoles.sql
-:r Cifrado.sql
-:r InsercionDatos.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionInicial.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionTablasParque.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionTablasPersona.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionTablasActividad.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionTablasConcesion.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionTablasVenta.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSP.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPapi.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmParque.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmPersona.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmActividad.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmConcesion.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmEntrada.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPabmVenta.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransParque.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransPersona.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransConcesion.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransVenta.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\ConfigOLE.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionRoles.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionLoginUserApp.sql
 
 PRINT '--Base de datos creada completamente--';
 GO
+*/
+
+--No correr esta parte automaticamente.
+/*
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\InsercionDatos.sql
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\Cifrado.sql
 */
