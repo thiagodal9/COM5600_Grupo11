@@ -349,7 +349,7 @@ BEGIN
 		IF @Lluvia = 1 SET @EstadoClima = 'Jornada Lluviosa'; ELSE SET @EstadoClima = 'Condiciones Favorables'
 
 		SELECT 
-			@TempActual AS [Temperatura Actual (°C)],
+			@TempActual AS [Temperatura Actual (Â°C)],
 			@EstadoClima AS [Estado del Clima]
 	END
 END;
@@ -359,7 +359,7 @@ GO
 -------------------------------------------------------------------------------------
 ----SP de reportes
 
---Reporte de visitas por semana, mes y año, por parque. Devuelve un .xml fisico.
+--Reporte de visitas por semana, mes y aÃ±o, por parque. Devuelve un .xml fisico.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptVisitasPorPeriodoXML'))
 	DROP PROCEDURE PnSP.rptVisitasPorPeriodoXML
 GO
@@ -373,7 +373,7 @@ GO
 PRINT '--Creado SP: rptVisitasPorPeriodoXML--';
 GO
 
---Ingresos por parque por semana, mes y año (entradas y concesiones)
+--Ingresos por parque por semana, mes y aÃ±o (entradas y concesiones)
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptIngresosTotales'))
 	DROP PROCEDURE PnSP.rptIngresosTotales
 GO
@@ -417,7 +417,6 @@ GO
 PRINT '--Creado SP: rptIngresosTotales--';
 GO
 
-
 --Deudores (Concesiones atrasadas, detallando meses y montos). Devuelve un hipervinculo.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptConcesionesDeudorasXML'))
 	DROP PROCEDURE PnSP.rptConcesionesDeudorasXML
@@ -445,7 +444,6 @@ END;
 GO
 PRINT '--Creado SP: rptConcesionesDeudorasXML--';
 GO
-
 
 -- Matriz de visitas: Tabla cruzada mostrando visitas por mes y parque
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptMatrizVisitasPivot'))
@@ -481,7 +479,6 @@ END;
 GO
 PRINT '--Creado SP: rptMatrizVisitasPivot--';
 GO
-
 
 -- Parques y concesiones: Listado de parques y vector anidado. Devuelve un hipervinculo.
 IF EXISTS (SELECT name FROM sys.objects WHERE object_id = OBJECT_ID('PnSP.rptParquesConcesionesAnidadoXML'))
