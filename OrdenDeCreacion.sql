@@ -73,7 +73,6 @@ Los archivos deben estar guardados en la misma carpeta que este script.
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransConcesion.sql
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionSPtransVenta.sql
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\ConfigOLE.sql
-:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionRoles.sql
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionLoginUserApp.sql
 
 PRINT '--Base de datos creada completamente--';
@@ -82,6 +81,7 @@ GO
 
 --No correr esta parte automaticamente.
 /*
+:r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\CreacionRoles.sql
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\InsercionDatos.sql
 :r C:\Users\Usuario\Desktop\1erC-2026\BDD-Aplic\TPBdDA\Nivel5\COM5600_Grupo11-main\Cifrado.sql
 */
