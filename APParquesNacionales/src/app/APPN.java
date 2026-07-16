@@ -58,6 +58,10 @@ public class APPN {
 					+ ", " +
 					"Ubicacion: " + result.getString("Ubicacion")
 					+ ", " +
+					"Latitud: " + result.getString("Latitud")
+					+ ", " +
+					"Longitud: " + result.getString("Longitud")
+					+ ", " +
 					"Superficie: " + result.getString("Superficie")
 					+ ", " +
 					"Tipo de Parque: " + result.getString("Tipo")
@@ -129,10 +133,12 @@ public class APPN {
 		System.out.println("\n");
 	}
 	
-	public void altaParque(String nombre, int ubicacion, int superficie, int tipo)
+	public void altaParque(String nombre, int ubicacion, String latitud, String longitud, int superficie, int tipo)
 	{
 		String lineaOperacion = "EXECUTE PnSPabm.altaParque @nombre = '" + nombre + "'"
 														+ ", @ubicacion = " + String.valueOf(ubicacion) 
+														+ ", @latitud = '" + latitud + "'"
+														+ ", @longitud = '" + longitud + "'"
 														+ ", @superficie = " + String.valueOf(superficie) 
 														+ ", @tipo = " + String.valueOf(tipo);
 		

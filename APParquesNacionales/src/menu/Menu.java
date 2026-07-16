@@ -99,7 +99,7 @@ public class Menu
 	
 	private void nuevo()
 	{
-		String nombre;
+		String nombre, latitud, longitud;
 		int ubicacion, superficie, tipo;
 		
 		if(estado)
@@ -113,13 +113,22 @@ public class Menu
 			System.out.println("\n-Ingrese la ubicacion: ");
 			ubicacion = scan.nextInt();
 			
+			if( scan.hasNextLine() )
+				scan.nextLine();
+			
+			System.out.println("-Ingrese la latitud: ");
+			latitud = scan.nextLine();
+			
+			System.out.println("-Ingrese la longitud: ");
+			longitud = scan.nextLine();
+			
 			System.out.println("\n-Ingrese la superficie(en hectareas): ");
 			superficie = scan.nextInt();
 			
 			System.out.println("\n-Ingrese el tipo: ");
 			tipo = scan.nextInt();
 			
-			app.altaParque(nombre, ubicacion, superficie, tipo);
+			app.altaParque(nombre, ubicacion, latitud, longitud, superficie, tipo);
 		}
 		else
 			System.out.println("--Aun no se ha iniciado el sistema.--\n");
