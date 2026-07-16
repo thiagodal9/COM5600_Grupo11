@@ -18,10 +18,20 @@ BEGIN
 END;
 GO
 
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.schemas
+    WHERE name = 'Inserciones'
+)
+BEGIN
+    EXEC('CREATE SCHEMA Inserciones');
+END;
+GO
+
 
 --Creo la tabla final
 if not exists (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE
-TABLE_SCHEMA = 'PnTablas' AND TABLE_NAME = 'Visitas')
+TABLE_SCHEMA = 'Inserciones' AND TABLE_NAME = 'Visitas')
 begin
 create table PnTablas.Visitas(
 idVisita int identity(1,1) primary key,
@@ -34,7 +44,7 @@ end
 go
 
 
-select * from PnTablas.Visitas
+select * from Inserciones.Visitas
 go
 
 /*
@@ -42,7 +52,7 @@ go
 INSERCIÓN CSV
 ===========================================================================================================
 */
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarVisitas
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarVisitas
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -77,7 +87,7 @@ BEGIN
     EXEC sp_executesql @SQL;
 
     -- Inserto únicamente los registros nuevos
-    INSERT INTO PnTablas.Visitas
+    INSERT INTO Inserciones.Visitas
     (
         fechaVisita,
         origenVisitante,
@@ -92,7 +102,7 @@ BEGIN
     FROM #VisitasTemp t
     WHERE NOT EXISTS (
         SELECT 1
-        FROM PnTablas.Visitas v
+        FROM Inserciones.Visitas v
         WHERE v.fechaVisita = CAST(t.indice_tiempo AS DATE)
           AND v.origenVisitante = t.origen_visitantes
           AND v.cantVisitas = CAST(t.visitas AS DECIMAL(10,2))
@@ -103,11 +113,11 @@ BEGIN
 END;
 GO
 
-select * from PnTablas.Visitas
+select * from Inserciones.Visitas
 go
 
 --Pruebo el SP
-execute PnTablas.sp_ImportarVisitas 'C:\Importar\visitas-residentes-y-no-residentes.csv'
+execute Inserciones.sp_ImportarVisitas 'C:\Importar\visitas-residentes-y-no-residentes.csv'
 go
 
 
@@ -117,7 +127,7 @@ INSERCIÓN JSON
 ===========================================================================================================
 */
 
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarVisitasJSON
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarVisitasJSON
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -162,7 +172,7 @@ BEGIN
         observaciones NVARCHAR(200)
     );
 
-    INSERT INTO PnTablas.Visitas
+    INSERT INTO Inserciones.Visitas
     (
         fechaVisita,
         origenVisitante,
@@ -177,7 +187,7 @@ BEGIN
     FROM #VisitasTemp t
     WHERE NOT EXISTS(
         SELECT 1
-        FROM PnTablas.Visitas v
+        FROM Inserciones.Visitas v
         WHERE v.fechaVisita = t.indice_tiempo
           AND v.origenVisitante = t.origen_visitantes
           AND v.cantVisitas = t.visitas
@@ -192,11 +202,11 @@ GO
 IF NOT EXISTS (
     SELECT *
     FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'PnTablas'
+    WHERE TABLE_SCHEMA = 'Inserciones'
       AND TABLE_NAME = 'visitasXRegion'
 )
 BEGIN
-create table PnTablas.visitasXRegion(
+create table Inserciones.visitasXRegion(
 idVisita int identity(1,1) primary key,
 indice_tiempo date,
 region_destino nvarchar(100),
@@ -207,7 +217,7 @@ observaciones nvarchar(MAX)
 END
 go
 
-select * from PnTablas.visitasXRegion
+select * from Inserciones.visitasXRegion
 go
 
 /*
@@ -215,7 +225,7 @@ go
 INSERCIÓN CSV
 ===========================================================================================================
 */
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarVisitasRegion
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarVisitasRegion
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -247,7 +257,7 @@ BEGIN
 
     EXEC sp_executesql @SQL;
 
-    INSERT INTO PnTablas.visitasXRegion
+    INSERT INTO Inserciones.visitasXRegion
     (
         indice_tiempo,
         region_destino,
@@ -264,7 +274,7 @@ BEGIN
     FROM #VisitasTemp t
     WHERE NOT EXISTS (
         SELECT 1
-        FROM PnTablas.visitasXRegion v
+        FROM Inserciones.visitasXRegion v
         WHERE v.indice_tiempo = CAST(t.indice_tiempo AS DATE)
           AND v.region_destino = t.region_destino
           AND v.origen_visitante = t.origen_visitantes
@@ -277,7 +287,7 @@ END;
 GO
 
 --Pruebo el SP
-exec PnTablas.sp_ImportarVisitasRegion 'C:\Importar\visitas-residentes-y-no-residentes-por-region.csv'
+exec Inserciones.sp_ImportarVisitasRegion 'C:\Importar\visitas-residentes-y-no-residentes-por-region.csv'
 go
 
 /*
@@ -285,7 +295,7 @@ go
 INSERCIÓN JSON
 ===========================================================================================================
 */
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarVisitasRegionJSON
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarVisitasRegionJSON
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -333,7 +343,7 @@ BEGIN
         observaciones NVARCHAR(200)
     );
 
-    INSERT INTO PnTablas.visitasXRegion
+    INSERT INTO Inserciones.visitasXRegion
     (
         indice_tiempo,
         region_destino,
@@ -350,7 +360,7 @@ BEGIN
     FROM #VisitasTemp t
     WHERE NOT EXISTS(
         SELECT 1
-        FROM PnTablas.visitasXRegion v
+        FROM Inserciones.visitasXRegion v
         WHERE v.indice_tiempo = t.indice_tiempo
           AND v.region_destino = t.region_destino
           AND v.origen_visitante = t.origen_visitantes
@@ -362,18 +372,18 @@ BEGIN
 END;
 GO
 
-select * from PnTablas.visitasXRegion
+select * from Inserciones.visitasXRegion
 go
 
 
 IF NOT EXISTS (
     SELECT *
     FROM INFORMATION_SCHEMA.TABLES
-    WHERE TABLE_SCHEMA = 'PnTablas'
+    WHERE TABLE_SCHEMA = 'Inserciones'
       AND TABLE_NAME = 'Reclamos'
 )
 BEGIN
-    CREATE TABLE PnTablas.Reclamos(
+    CREATE TABLE Inserciones.Reclamos(
         id_reclamo INT identity(1,1) primary key,
         reclamo_ano INT,
         reclamo_mes_nro TINYINT,
@@ -393,7 +403,7 @@ GO
 INSERCIÓN CSV
 ===========================================================================================================
 */
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarReclamos2022
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarReclamos2022
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -427,7 +437,7 @@ BEGIN
     );
 
     -- Inserto únicamente los registros nuevos
-    INSERT INTO PnTablas.Reclamos
+    INSERT INTO Inserciones.Reclamos
     (
         reclamo_ano,
         reclamo_mes_nro,
@@ -452,7 +462,7 @@ BEGIN
     FROM #ReclamosTemp t
     WHERE NOT EXISTS (
         SELECT 1
-        FROM PnTablas.Reclamos r
+        FROM Inserciones.Reclamos r
         WHERE r.reclamo_ano = CAST(t.reclamo_ano AS INT)
           AND r.reclamo_mes_nro = CAST(t.reclamo_mes_nro AS TINYINT)
           AND r.reclamo_mes_nombre = t.reclamo_mes_nombre
@@ -469,10 +479,10 @@ END;
 GO
 
 --Pruebo el SP
-exec PnTablas.sp_ImportarReclamos2022
+exec Inserciones.sp_ImportarReclamos2022
 go
 
-select * from PnTablas.Reclamos
+select * from Inserciones.Reclamos
 go
 
 /*
@@ -480,7 +490,7 @@ go
 INSERCIÓN JSON
 ===========================================================================================================
 */
-CREATE OR ALTER PROCEDURE PnTablas.sp_ImportarJSON
+CREATE OR ALTER PROCEDURE Inserciones.sp_ImportarJSON
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -529,7 +539,7 @@ BEGIN
         reclamo_cantidad INT
     );
 
-    INSERT INTO PnTablas.Reclamos(
+    INSERT INTO Inserciones.Reclamos(
         reclamo_ano,
         reclamo_mes_nro,
         reclamo_mes_nombre,
@@ -553,7 +563,7 @@ BEGIN
     FROM #ReclamosTemp t
     WHERE NOT EXISTS(
         SELECT 1
-        FROM PnTablas.Reclamos r
+        FROM Inserciones.Reclamos r
         WHERE r.reclamo_ano = t.reclamo_ano
           AND r.reclamo_mes_nro = t.reclamo_mes_nro
           AND r.reclamo_mes_nombre = t.reclamo_mes_nombre
@@ -569,14 +579,12 @@ BEGIN
 END;
 GO
 
-exec PnTablas.sp_ImportarJSON 'C:\Importar\reclamos_prestadoras_2022.json'
+exec Inserciones.sp_ImportarJSON 'C:\Importar\reclamos_prestadoras_2022.json'
 go
 
-select * from PnTablas.Reclamos
+select * from Inserciones.Reclamos
 go
 
-delete PnTablas.Reclamos
-go
 
 
 
