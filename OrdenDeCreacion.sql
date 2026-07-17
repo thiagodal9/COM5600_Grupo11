@@ -77,7 +77,7 @@ Los archivos deben estar guardados en la misma carpeta que este script.
 :r PATH\CreacionSPtransVenta.sql
 :r PATH\ConfigOLE.sql
 :r PATH\CreacionLoginUserApp.sql
-:r PATH\InsercionDatos.sql
+:r PATH\Dataset_testing.sql
 
 PRINT '--Base de datos creada completamente--';
 GO
